@@ -1,0 +1,17 @@
+allowBuilds:
+  '@carbon/icon-helpers': false
+  '@carbon/icons': false
+  'unrs-resolver': false
+
+catalog:
+  'react': 19.2.0
+  'react-dom': 19.2.0
+  'react-native-builder-bob': 0.41.0
+
+engineStrict: true
+
+nodeLinker: hoisted
+
+packages:
+  - 'example'
+  - 'package'

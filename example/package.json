@@ -1,0 +1,32 @@
+{
+	"name": "example",
+	"private": true,
+	"main": "expo-router/entry",
+	"scripts": {
+		"android": "expo run:android --variant debugOptimized",
+		"ios": "expo run:ios",
+		"prebuild": "expo prebuild",
+		"prebuild:clean": "expo prebuild --clean",
+    	"start": "expo start",
+		"web": "npm run start -- --web"
+	},
+	"dependencies": {
+		"@audira/carbon-react-native": "1.0.8",
+		"@audira/carbon-react-native-elements": "1.0.0",
+		"@carbon/icons": "11.80.0",
+		"expo": "55.0.23",
+		"expo-build-properties": "55.0.13",
+   		"expo-image": "55.0.10",
+		"expo-image-picker": "55.0.20",
+    	"expo-router": "55.0.14",
+		"expo-splash-screen": "55.0.20",
+		"expo-status-bar": "55.0.6",
+    	"expo-system-ui": "55.0.17",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"react-native": "0.83.6",
+		"react-native-web": "0.21.2",
+		"react-native-safe-area-context": "5.7.0",
+		"react-native-screens": "4.24.0"
+	}
+}
