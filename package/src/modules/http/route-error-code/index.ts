@@ -6,7 +6,7 @@ export const FOUR_O_FOUR = "FOUR_O_FOUR"
 /**
  * A handler operation is timed out
  */
-export const TIMEDOUT = "OPERATION_TIMEDOUT"
+export const TIMEDOUT = "TIMEDOUT"
 
 /**
  * Unknown error occured

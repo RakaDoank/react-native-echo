@@ -29,4 +29,7 @@ export interface Request {
 
 	text(): Promise<string>,
 
+	// TODO : Provide a clone method to clone the request formData, json, and text in native side
+	// clone()
+
 }

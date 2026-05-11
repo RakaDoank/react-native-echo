@@ -2,7 +2,7 @@ import {
 	EchoError,
 } from "../../_internal/modules"
 
-export class RouteError extends EchoError {
+export class ServerError extends EchoError {
 
 	constructor(
 		data: {
@@ -12,7 +12,7 @@ export class RouteError extends EchoError {
 	) {
 		super({
 			...data,
-			name: "RouteError",
+			name: "ServerError",
 		})
 	}
 

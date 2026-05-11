@@ -4,7 +4,7 @@ import type {
 
 const
 	packageName =
-		"id.sufeni.oss.reactnativeecho",
+		"id.sufeni.oss.reactnativeecho.example",
 
 	versionCode =
 		1,
@@ -21,7 +21,7 @@ export default {
 
 	orientation: "default",
 
-	platforms: ["android", "ios", "web"],
+	platforms: ["android"],
 
 	userInterfaceStyle: "automatic",
 

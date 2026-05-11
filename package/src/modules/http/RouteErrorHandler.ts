@@ -1,3 +1,7 @@
+import type {
+	Response,
+} from "./Response"
+
 export type RouteErrorHandler =
 	(
 		error: Error,

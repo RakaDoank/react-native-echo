@@ -15,5 +15,16 @@
 		"!android/gradlew.bat",
 		"!android/local.properties",
 		"!ios/build"
-	]
+	],
+	"peerDependencies": {
+		"react-native-worklets": ">=0.7"
+	},
+	"codegenConfig": {
+		"name": "ReactNativeEchoSpec",
+		"type": "modules",
+		"jsSrcsDir": "./src/_internal/native-modules",
+		"android": {
+			"javaPackageName": "id.sufeni.oss.reactnativeecho"
+		}
+	}
 }

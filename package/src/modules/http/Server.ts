@@ -9,6 +9,10 @@ import type {
 } from "./Method"
 
 import {
+	Response,
+} from "./Response"
+
+import {
 	RouteError,
 } from "./RouteError"
 
@@ -28,6 +32,10 @@ import {
 	RequestBuilder,
 } from "./_RequestBuilder"
 
+import {
+	responseToObject,
+} from "./_response-to-object"
+
 import * as RouteErrorCode from "./route-error-code"
 
 export class Server implements ServerInterface {
@@ -44,8 +52,6 @@ export class Server implements ServerInterface {
 	} =
 		{}
 
-	private routeErrorHandler: RouteErrorHandler | null = null
-
 	private registeredRouteMethod: {
 		[Path in string]: Partial<Record<
 			Method,
@@ -56,6 +62,8 @@ export class Server implements ServerInterface {
 		>>
 	} =
 		{}
+
+	private routeErrorHandler: RouteErrorHandler | null = null
 
 	constructor() {
 		this.serverID = Math.random().toString()
@@ -76,8 +84,8 @@ export class Server implements ServerInterface {
 						obj.serverID == this.serverID &&
 
 						typeof obj.requestID == "string" &&
-						typeof obj.path === "string" &&
-						typeof obj.method === "string"
+						typeof obj.path == "string" &&
+						typeof obj.method == "string"
 					) {
 
 						const route =
@@ -87,26 +95,51 @@ export class Server implements ServerInterface {
 						if(route?.handler) {
 							route
 								.handler(
-									new RequestBuilder({
-										headers: obj.headers,
-										method: obj.method as Method,
-									}),
+									new RequestBuilder(
+										obj.requestID,
+										{
+											headers: obj.headers,
+											method: obj.method as Method,
+										},
+									),
 								)
 								.then(response => {
-									const test = new Response()
+									
 								})
-								.catch(e => {
-									const error = this.getError(e)
+								.catch<Response>(e => {
+									const error = e instanceof Error
+										? e
+										: new RouteError({
+											code: RouteErrorCode.UNKNOWN,
+											message: "Unknown error",
+										})
 
-									if(this.routeErrorHandler) {
-										this.routeErrorHandler(error)
+									const errHandler =
+										// User route handler thrown an Error
+										// Move to its error handler
+										route.errorHandler ||
+
+										// No route handler found for the specific request
+										// Use the global route error handler
+										this.routeErrorHandler
+
+									if(errHandler) {
+										errHandler(error)
+											.then(res => {
+
+											})
 									} else {
-										this.defaultResponse()
+										// No global route error handler found
+										// Use react-native-echo default response
+										this.defaultResponseHandler(error)
 									}
 								})
-						} else if(route?.errorHandler) {
-							route
-								.errorHandler(
+						} else if(this.routeErrorHandler) {
+							// Specific route was not found
+							// Send an 404 error
+
+							this
+								.routeErrorHandler(
 									new RouteError({
 										code: RouteErrorCode.FOUR_O_FOUR,
 										message: "Unspecified route",
@@ -116,14 +149,19 @@ export class Server implements ServerInterface {
 									
 								})
 								.catch(e => {
-									const error = this.getError(e)
+									// The .routeError was thrown an Error again
+									// Use react-native-echo default response
 
-									if(this.routeErrorHandler) {
-										this.routeErrorHandler(error)
-									} else {
-										this.defaultResponse()
-									}
+									// If you are a react-native-echo user,
+									// please do not throw an error again
+									// You can use try..catch in your .routeError
+									// and returns your proper Echo.Http.Response
+
+									this.defaultResponseHandler(e)
 								})
+						} else {
+							// 404
+							
 						}
 
 					}
@@ -153,18 +191,21 @@ export class Server implements ServerInterface {
 		}
 	}
 
-	private getError(e: unknown) {
-		const error = e instanceof Error
-			? e
-			: new RouteError({
-				code: RouteErrorCode.UNKNOWN,
-				message: "Unknown error",
-			})
-
-		return error
+	private sendNativeResponse(
+		requestID: string,
+		response: Response,
+	): void {
+		NativeReactNativeEcho
+			.httpResponse(
+				this.serverID,
+				requestID,
+				responseToObject(response),
+			)
 	}
 
-	private defaultResponse() {
+	private defaultResponseHandler(
+		error?: unknown,
+	): Promise<Response> {
 		
 	}
 
@@ -173,19 +214,20 @@ export class Server implements ServerInterface {
 		onStart?: () => void,
 	) {
 		NativeReactNativeEcho
-			.httpServerStart(this.serverID, port)
+			.httpServerListen(this.serverID, port)
 			.then(onStart)
 	}
 
 	stop() {
 		this.requestListenerSubscription?.remove()
+		this.requestListenerSubscription = null
 
 		NativeReactNativeEcho
 			.httpServerStop(this.serverID)
 	}
 
 	/**
-	 * Register a route for a specific path.
+	 * Register a route request for a specific path.
 	 * This route takes precedence over the shorthand route method, e.g. `get`, `post`, `put`, etc.
 	 */
 	route(
@@ -200,12 +242,15 @@ export class Server implements ServerInterface {
 	}
 
 	/**
-	 * Register a route as the last fallback for an error handler.
+	 * Register a route as the fallback for an error handler.
 	 * 
-	 * An route will invoke your error handler from each route in your `route`, `get`, `post`, and other methods.
-	 * If you don't pass an error handler to your route, this function will be invoked instead.
+	 * Remember, a specific request will invoke your error handler first from each route in your `route`, `get`, `post`, and other methods.
 	 * 
-	 * If you don't even pass an error handler to this method,
+	 * This function will be invoked only if you don't pass an error handler to your route,
+	 * or you throw an Error in your error handler from each route.
+	 * 
+	 * If you don't even pass an error handler to this instance method,
+	 * or throw an Error again,
 	 * `react-native-echo` will returns default response.
 	 */
 	routeError(

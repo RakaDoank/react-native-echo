@@ -1,5 +1,5 @@
 import type {
-	NativeReactNativeEchoSpec,
+	Spec,
 } from "../../_internal/native-modules/NativeReactNativeEcho"
 
 import type {
@@ -21,8 +21,9 @@ export class RequestBuilder implements Request {
 	readonly referrerPolicy: Request["referrerPolicy"]
 
 	constructor(
+		requestID: string,
 		data: {
-			headers: Parameters<Parameters<NativeReactNativeEchoSpec["httpRequestListener"]>[0]>[0]["headers"],
+			headers: Parameters<Parameters<Spec["httpRequestListener"]>[0]>[0]["headers"],
 			method: Request["method"],
 			url: Request["url"],
 			referrer: Request["referrer"],
@@ -50,11 +51,11 @@ export class RequestBuilder implements Request {
 	}
 
 	json(): Promise<any> {
-
+		this._bodyUsed = true
 	}
 
 	text(): Promise<string> {
-
+		this._bodyUsed = true
 	}
 
 }

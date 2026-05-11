@@ -4,14 +4,14 @@ import {
 	type TurboModule,
 } from "react-native"
 
-export interface NativeReactNativeEchoSpec extends TurboModule {
+export interface Spec extends TurboModule {
 
 	// +++++ HTTP +++++
 	httpCreateServer: (
 		serverID: string,
 	) => void,
 
-	httpServerStart: (
+	httpServerListen: (
 		serverID: string,
 		port: number,
 	) => Promise<void>,
@@ -35,14 +35,15 @@ export interface NativeReactNativeEchoSpec extends TurboModule {
 		referrerPolicy: string,
 	}>,
 
-	httpResponse: CodegenTypes.EventEmitter<{
+	httpResponse: (
 		serverID: string,
 		requestID: string,
-	}>,
 
-	httpGetRequestHeaders: (
-		serverID: string,
-		requestID: string,
+		/**
+		 * This is have to be the `Response` class but in plain object.
+		 * Please use `_response-to-object` function to convert the `Response` class to plain object.
+		 */
+		responseObject: CodegenTypes.UnsafeObject,
 	) => void,
 
 	httpGetRequestFormData: (
@@ -63,6 +64,6 @@ export interface NativeReactNativeEchoSpec extends TurboModule {
 
 }
 
-export default TurboModuleRegistry.getEnforcing<NativeReactNativeEchoSpec>(
+export default TurboModuleRegistry.getEnforcing<Spec>(
 	"ReactNativeEcho",
 )

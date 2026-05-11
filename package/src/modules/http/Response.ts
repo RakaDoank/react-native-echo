@@ -17,7 +17,7 @@ export class Response {
 	 * The `statusText` read-only property of the Response interface contains the status message corresponding to the HTTP status code in Response.status.
 	 * 
 	 * `Reason-Phrase` is not supported in HTTP/2+,
-	 * even though we don't know how to create an HTTP/2+ protocol from Android.
+	 * even though we don't know how to create an HTTP/2+ protocol in Android.
 	 */
 	readonly statusText: string = "OK"
 
