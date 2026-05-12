@@ -1,5 +1,5 @@
-import type {
-	Spec,
+import NativeReactNativeEcho, {
+	type Spec,
 } from "../../_internal/native-modules/NativeReactNativeEcho"
 
 import type {
@@ -21,8 +21,9 @@ export class RequestBuilder implements Request {
 	readonly referrerPolicy: Request["referrerPolicy"]
 
 	constructor(
-		requestID: string,
-		data: {
+		private serverID: string,
+		private requestID: string,
+		init: {
 			headers: Parameters<Parameters<Spec["httpRequestListener"]>[0]>[0]["headers"],
 			method: Request["method"],
 			url: Request["url"],
@@ -30,16 +31,16 @@ export class RequestBuilder implements Request {
 			referrerPolicy: Request["referrerPolicy"],
 		},
 	) {
-		Object.entries(data.headers).forEach(([key, val]) => {
+		Object.entries(init.headers).forEach(([key, val]) => {
 			if(typeof val == "string") {
 				this.headers.append(key, val)
 			}
 		})
 
-		this.method = data.method
-		this.url = data.url
-		this.referrer = data.referrer
-		this.referrerPolicy = data.referrerPolicy
+		this.method = init.method
+		this.url = init.url
+		this.referrer = init.referrer
+		this.referrerPolicy = init.referrerPolicy
 	}
 
 	get bodyUsed() {
@@ -47,15 +48,73 @@ export class RequestBuilder implements Request {
 	}
 
 	formData(): Promise<FormData> {
-		this._bodyUsed = true
+		if(!this._bodyUsed) {
+			this._bodyUsed = true
+			return NativeReactNativeEcho.httpGetRequestFormData(this.serverID, this.requestID)
+				.then(object => {
+					if(object && typeof object == "object") {
+						const formData = new FormData()
+						Object.entries(object).forEach(([key, val]) => {
+							if(typeof val == "string") {
+								formData.append(key, val)
+							}
+						})
+						return formData
+					}
+					throw new TypeError("The body cannot be parsed as a FormData object")
+				})
+				.catch(error => {
+					if(error instanceof Error) {
+						throw error
+					}
+					throw new TypeError()
+				})
+		} else {
+			throw new TypeError("The request body is disturbed or locked")
+		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	json(): Promise<any> {
-		this._bodyUsed = true
+		if(!this._bodyUsed) {
+			this._bodyUsed = true
+			return NativeReactNativeEcho.httpGetRequestJson(this.serverID, this.requestID)
+				.then(string => {
+					if(string) {
+						return JSON.stringify(string)
+					}
+					throw new SyntaxError("The request body cannot be parsed as JSON")
+				})
+				.catch(error => {
+					if(error instanceof Error) {
+						throw error
+					}
+					throw new TypeError()
+				})
+		} else {
+			throw new TypeError("The request body is disturbed or locked")
+		}
 	}
 
 	text(): Promise<string> {
-		this._bodyUsed = true
+		if(!this._bodyUsed) {
+			this._bodyUsed = true
+			return NativeReactNativeEcho.httpGetRequestText(this.serverID, this.requestID)
+				.then(string => {
+					if(string) {
+						return JSON.stringify(string)
+					}
+					throw new TypeError("The body cannot be parsed as a FormData object")
+				})
+				.catch(error => {
+					if(error instanceof Error) {
+						throw error
+					}
+					throw new TypeError()
+				})
+		} else {
+			throw new TypeError("The request body is disturbed or locked")
+		}
 	}
 
 }

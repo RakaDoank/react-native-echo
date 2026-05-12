@@ -26,16 +26,19 @@ export interface Spec extends TurboModule {
 	httpRequestListener: CodegenTypes.EventEmitter<{
 		serverID: string,
 		requestID: string,
-		path: string,
 
-		url: string,
+		// For the Request.url object
+		urlOrigin: string,
+		urlPathname: string,
+		urlSearch: string,
+
 		method: string,
 		headers: CodegenTypes.UnsafeObject,
 		referrer: string,
 		referrerPolicy: string,
 	}>,
 
-	httpResponse: (
+	httpWriteResponse: (
 		serverID: string,
 		requestID: string,
 
@@ -44,7 +47,7 @@ export interface Spec extends TurboModule {
 		 * Please use `_response-to-object` function to convert the `Response` class to plain object.
 		 */
 		responseObject: CodegenTypes.UnsafeObject,
-	) => void,
+	) => Promise<void>,
 
 	httpGetRequestFormData: (
 		serverID: string,

@@ -1,3 +1,5 @@
+import * as Const from "../../_internal/const"
+
 /**
  * The Response interface of the server represents the response to a request.
  * 
@@ -9,17 +11,34 @@
  */
 export class Response {
 
-	readonly headers: Headers
-
-	readonly status: number = 200
-
 	/**
-	 * The `statusText` read-only property of the Response interface contains the status message corresponding to the HTTP status code in Response.status.
+	 * Serve a file with a located URI.
+	 * This method only works for a local file.
 	 * 
-	 * `Reason-Phrase` is not supported in HTTP/2+,
-	 * even though we don't know how to create an HTTP/2+ protocol in Android.
+	 * If you are in the future want to serve a remote file,
+	 * you can fetch the file first, and send to the client back with `Blob`.
 	 */
-	readonly statusText: string = "OK"
+	static file(
+		uri: string,
+		init?: ConstructorParameters<typeof Response>[1],
+	) {
+		const headers = createHeadersResponseInit(init?.headers)
+		// this header name will be removed later from the actual server response
+		// This is only for the native side purposes to tell it that string is a file uri
+		headers.append(
+			Const.Headers.XReactNativeEchoResponseBody.NAME,
+			Const.Headers.XReactNativeEchoResponseBody.FILE_URI,
+		)
+
+		return new Response(
+			uri,
+			{
+				status: init?.status,
+				statusText: init?.statusText,
+				headers,
+			},
+		)
+	}
 
 	/**
 	 * The json() static method of the `Response` interface returns a `Response` that contains the provided JSON data as body, and a `Content-Type` header which is set to `application/json`. The response status, status message, and additional headers can also be set.
@@ -41,28 +60,28 @@ export class Response {
 		)
 	}
 
-	static file(
-		uri: string,
-		init?: ConstructorParameters<typeof Response>[1],
-	) {
-		const headers = createHeadersResponseInit(init?.headers)
-		// this header key will be removed later from the actual server response
-		// This is only for the native side purposes to tell it that string is an file uri
-		headers.append("X-React-Native-Echo-Response-Body-File", "file")
+	readonly headers: Headers
 
-		return new Response(
-			uri,
-			{
-				status: init?.status,
-				statusText: init?.statusText,
-				headers,
-			},
-		)
-	}
+	readonly status: number = 200
 
+	/**
+	 * The `statusText` read-only property of the Response interface contains the status message corresponding to the HTTP status code in Response.status.
+	 * 
+	 * `Reason-Phrase` is not supported in HTTP/2+,
+	 * even though we don't know how to create an HTTP/2+ protocol in Android.
+	 */
+	readonly statusText: string = "OK"
+
+	/**
+	 * To serve a file with located `uri`, you should use the static `Response.file()` method instead.
+	 * 
+	 * For the `Blob` and `File` class, those are documented since React Native >=0.82 version.
+	 * Please do not use it for the constructor in earlier version, unless you can confirm that class works as defined in the web specifications.
+	 */
 	constructor(
 		public body:
 			| string
+			| globalThis.Blob // React Native >=0.82
 			| null,
 		init?: {
 			/**
@@ -83,7 +102,7 @@ export class Response {
 	) {
 
 		if(typeof init?.status == "number") {
-			this.status = init.status
+			this.status = Math.min(Math.max(init.status, 100), 599)
 		}
 
 		// globalThis is documented in React Native website since 0.82 version

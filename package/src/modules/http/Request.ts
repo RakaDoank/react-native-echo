@@ -16,7 +16,21 @@ export interface Request {
 
 	readonly method: Method,
 
-	readonly url: string,
+	readonly url: {
+		/**
+		 * The origin property gives connection information about the original caller 
+		 */
+		readonly origin: string,
+		/**
+		 * @example /api/foo/bar
+		 */
+		readonly pathname: string,
+		/**
+		 * A string indicating the URL's parameter string; if any parameters are provided, this string includes all of them, beginning with the leading ? character. It will be empty string if it doesn't has any.
+		 * @example ?q=123
+		 */
+		readonly search: string,
+	},
 
 	readonly referrer: string,
 

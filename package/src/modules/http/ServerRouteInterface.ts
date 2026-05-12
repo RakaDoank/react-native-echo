@@ -10,7 +10,7 @@ import type {
 	RouteHandler,
 } from "./RouteHandler"
 
-export interface ServerInterface extends Record<
+export interface ServerRouteInterface extends Record<
 	Lowercase<Method>,
 	(
 		path: string,
