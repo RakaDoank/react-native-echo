@@ -162,7 +162,7 @@ export class Server implements ServerRouteInterface {
 														? e2
 														: new ServerError({
 															code: ServerErrorCode.UNKNOWN,
-															message: "Unknown error ocurred",
+															message: "Unknown error",
 														}),
 												)
 													.then(response => {
@@ -223,9 +223,7 @@ export class Server implements ServerRouteInterface {
 												status: 500,
 												error: {
 													code: "ECHO_UNHANDLED_ERROR",
-													message: e1 instanceof Error
-														? e1.message || "Internal server error"
-														: "Internal server error",
+													message: error.message || "Internal server error",
 												},
 											},
 										)
