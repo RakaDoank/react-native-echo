@@ -7,10 +7,6 @@ import * as Const from "../../_internal/const"
 
 import NativeReactNativeEcho from "../../_internal/native-modules/NativeReactNativeEcho"
 
-import type {
-	Method,
-} from "./Method"
-
 import {
 	Response,
 } from "./Response"
@@ -34,6 +30,10 @@ import {
 import type {
 	ServerEventName,
 } from "./ServerEventName"
+
+import type {
+	ServerOptions,
+} from "./ServerOptions"
 
 import type {
 	ServerRouteInterface,
@@ -68,13 +68,12 @@ export class Server implements ServerRouteInterface {
 		{}
 
 	private registeredRouteWithMethod: {
-		[Path in string]: Partial<Record<
-			Method,
-			{
+		[Path in string]: Partial<{
+			[Method in string]: {
 				handler: RouteHandler,
 				errorHandler?: RouteErrorHandler,
 			}
-		>>
+		}>
 	} =
 		{}
 
@@ -84,11 +83,23 @@ export class Server implements ServerRouteInterface {
 		[Name in ServerEventName]: () => void
 	}> = {}
 
-	constructor() {
-		this.id = Math.random().toString()
+	constructor(
+		/**
+		 * Assign an ID to the server instance.
+		 * You can leave it `undefined` or empty string to assign it randomly
+		 */
+		id?: string,
+		options?: ServerOptions,
+	) {
+		this.id = id || Math.random().toString()
 
 		NativeReactNativeEcho
-			.httpCreateServer(this.id)
+			.httpCreateServer(
+				this.id,
+				{
+					routeHandlerTimeout: options?.routeHandlerTimeout ?? 180_000, // 3 minutes
+				},
+			)
 
 		this.requestListenerSubscription =
 			NativeReactNativeEcho
@@ -109,7 +120,7 @@ export class Server implements ServerRouteInterface {
 
 						const route =
 							this.registeredRoute[nativeRequest.urlPathname] ??
-							this.registeredRouteWithMethod[nativeRequest.urlPathname]?.[nativeRequest.method as Method]
+							this.registeredRouteWithMethod[nativeRequest.urlPathname]?.[nativeRequest.method]
 
 						if(route?.handler) {
 							route
@@ -119,9 +130,13 @@ export class Server implements ServerRouteInterface {
 										nativeRequest.requestID,
 										{
 											headers: nativeRequest.headers,
-											method: nativeRequest.method as Method,
+											method: nativeRequest.method,
+											origin: {
+												host: nativeRequest.originHost,
+												port: nativeRequest.originPort,
+												protocol: nativeRequest.originProtocol,
+											},
 											url: {
-												origin: nativeRequest.urlOrigin,
 												pathname: nativeRequest.urlPathname,
 												search: nativeRequest.urlSearch,
 											},
@@ -316,9 +331,6 @@ export class Server implements ServerRouteInterface {
 						// PANIC!
 						// WE CAN'T WRITE A RESPONSE TO UNKNOWN REQUEST
 						this.close()
-						this.listen(
-							this.port,
-						)
 					}
 				})
 	}
@@ -334,6 +346,11 @@ export class Server implements ServerRouteInterface {
 				responseToCodegenObject(response),
 			)
 			.then(this.registeredServerEvent?.on_response)
+			.catch(err => {
+				if(__DEV__) {
+					console.log("react-native-echo :: Error occured when send native response", err)
+				}
+			})
 	}
 
 	private defaultErrorResponseHandler(
@@ -369,7 +386,7 @@ export class Server implements ServerRouteInterface {
 	private registerRouteWithMethod(
 		route: {
 			path: string,
-			method: Method,
+			method: string,
 			handler: RouteHandler,
 			errorHandler?: RouteErrorHandler,
 		},
@@ -423,14 +440,16 @@ export class Server implements ServerRouteInterface {
 	}
 
 	close() {
-		this.requestListenerSubscription?.remove()
-		this.requestListenerSubscription = null
+		if(this.port != -1) {
+			this.requestListenerSubscription?.remove()
+			this.requestListenerSubscription = null
 
-		NativeReactNativeEcho
-			.httpServerStop(this.id)
+			NativeReactNativeEcho
+				.httpServerClose(this.id)
 
-		this.port = -1
-		this.registeredServerEvent.on_close?.()
+			this.port = -1
+			this.registeredServerEvent.on_close?.()
+		}
 	}
 
 	// +++++ Route +++++

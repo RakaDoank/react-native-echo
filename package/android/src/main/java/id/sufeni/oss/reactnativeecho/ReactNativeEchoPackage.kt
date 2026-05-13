@@ -9,8 +9,8 @@ import com.facebook.react.module.model.ReactModuleInfoProvider
 class ReactNativeEchoPackage : BaseReactPackage() {
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
     return when (name) {
-      MaterialColorModule.NAME -> {
-        MaterialColorModule(reactContext)
+      ReactNativeEchoModule.NAME -> {
+        ReactNativeEchoModule(reactContext)
       }
       else -> {
         null
@@ -20,6 +20,7 @@ class ReactNativeEchoPackage : BaseReactPackage() {
 
   override fun getReactModuleInfoProvider() = ReactModuleInfoProvider {
     mapOf(
+      // http
       ReactNativeEchoModule.NAME to ReactModuleInfo(
         name = ReactNativeEchoModule.NAME,
         className = ReactNativeEchoModule.NAME,
@@ -28,6 +29,9 @@ class ReactNativeEchoPackage : BaseReactPackage() {
         isCxxModule = false,
         isTurboModule = true
       ),
+
+      // ws
     )
   }
+
 }

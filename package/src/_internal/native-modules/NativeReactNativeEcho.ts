@@ -9,6 +9,9 @@ export interface Spec extends TurboModule {
 	// +++++ HTTP +++++
 	httpCreateServer: (
 		serverID: string,
+		options: {
+			routeHandlerTimeout: number,
+		},
 	) => void,
 
 	httpServerListen: (
@@ -16,7 +19,7 @@ export interface Spec extends TurboModule {
 		port: number,
 	) => Promise<void>,
 
-	httpServerStop: (
+	httpServerClose: (
 		serverID: string,
 	) => void,
 
@@ -27,15 +30,17 @@ export interface Spec extends TurboModule {
 		serverID: string,
 		requestID: string,
 
-		// For the Request.url object
-		urlOrigin: string,
-		urlPathname: string,
-		urlSearch: string,
-
+		// +++++ Headers +++++
 		method: string,
 		headers: CodegenTypes.UnsafeObject,
+		originHost: string,
+		originPort: string,
+		originProtocol: string,
+		urlPathname: string,
+		urlSearch: string,
 		referrer: string,
 		referrerPolicy: string,
+		// ----- Headers -----
 	}>,
 
 	httpWriteResponse: (
@@ -44,7 +49,7 @@ export interface Spec extends TurboModule {
 
 		/**
 		 * This is have to be the `Response` class but in plain object.
-		 * Please use `_response-to-object` function to convert the `Response` class to plain object.
+		 * Please use `_response-to-codegen-object` function to convert the `Response` class to plain object.
 		 */
 		responseObject: CodegenTypes.UnsafeObject,
 	) => Promise<void>,
@@ -54,10 +59,10 @@ export interface Spec extends TurboModule {
 		requestID: string,
 	) => Promise<CodegenTypes.UnsafeObject>,
 
-	httpGetRequestJson: (
-		serverID: string,
-		requestID: string,
-	) => Promise<string>,
+	// httpGetRequestJson: (
+	// 	serverID: string,
+	// 	requestID: string,
+	// ) => Promise<string>,
 
 	httpGetRequestText: (
 		serverID: string,

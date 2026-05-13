@@ -1,8 +1,4 @@
 import type {
-	Method,
-} from "./Method"
-
-import type {
 	RouteErrorHandler,
 } from "./RouteErrorHandler"
 
@@ -10,14 +6,7 @@ import type {
 	RouteHandler,
 } from "./RouteHandler"
 
-export interface ServerRouteInterface extends Record<
-	Lowercase<Method>,
-	(
-		path: string,
-		handler: RouteHandler,
-		errorHandler?: RouteErrorHandler,
-	) => void
-> {
+export interface ServerRouteInterface {
 
 	route: (
 		path: string,
@@ -28,5 +17,17 @@ export interface ServerRouteInterface extends Record<
 	routeError: (
 		errorHandler: RouteErrorHandler,
 	) => void,
+
+	get: (
+		path: string,
+		handler: RouteHandler,
+		errorHandler?: RouteErrorHandler,
+	) => void,
+
+	post: ServerRouteInterface["get"],
+
+	put: ServerRouteInterface["get"],
+
+	delete: ServerRouteInterface["get"],
 
 }

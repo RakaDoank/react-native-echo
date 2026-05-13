@@ -6,7 +6,6 @@ export {
 	ServerErrorCode,
 }
 
-export type * from "./Method"
 export type * from "./Request"
 export		* from "./RouteError"
 export type * from "./RouteErrorHandler"

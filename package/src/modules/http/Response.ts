@@ -3,8 +3,10 @@ import * as Const from "../../_internal/const"
 /**
  * The Response interface of the server represents the response to a request.
  * 
- * You can create a new Response object using the `Response()` constructor,
- * or you can use its static methods as a shorthand.
+ * You can write a new Response object using the `Response()` constructor,
+ * with a text, or no content with `null` body.
+ * 
+ * You can also use its static methods as a shorthand.
  * 
  * It's intended to be similar as possible to the `Response` Web API standard,
  * yet the instance is not fully similar.
@@ -73,6 +75,8 @@ export class Response {
 	readonly statusText: string = "OK"
 
 	/**
+	 * Write a response to your specific route request. You can send a text, or null (no content)
+	 * 
 	 * To serve a file with located `uri`, you should use the static `Response.file()` method instead.
 	 * 
 	 * For the `Blob` and `File` class, those are documented since React Native >=0.82 version.

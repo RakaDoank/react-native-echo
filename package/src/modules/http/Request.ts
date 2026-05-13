@@ -1,7 +1,3 @@
-import type {
-	Method,
-} from "./Method"
-
 /**
  * Read a client request from a route handler in your server.
  * 
@@ -14,20 +10,43 @@ export interface Request {
 
 	readonly headers: Headers,
 
-	readonly method: Method,
+	readonly method: string,
 
+	/**
+	 * The origin property gives connection information about the original caller
+	 * 
+	 * @example
+	 * ```js
+	 * {
+	 * 	host: "192.168.1.4",
+	 * 	port: "443", // it could be empty string
+	 * 	protocol: "http:"
+	 * }
+	 * ```
+	 */
+	readonly origin: { // not a standard Web API
+		host: string,
+		port: string,
+		protocol: string,
+	},
+
+	/**
+	 * @example
+	 * ```js
+	 * {
+	 * 	pathname: "/api/foo/bar",
+	 * 	search: "?q=123&foo=bar" // it could be empty string
+	 * }
+	 * ```
+	 */
 	readonly url: {
 		/**
-		 * The origin property gives connection information about the original caller 
-		 */
-		readonly origin: string,
-		/**
-		 * @example /api/foo/bar
+		 * @example "/api/foo/bar"
 		 */
 		readonly pathname: string,
 		/**
 		 * A string indicating the URL's parameter string; if any parameters are provided, this string includes all of them, beginning with the leading ? character. It will be empty string if it doesn't has any.
-		 * @example ?q=123
+		 * @example "?q=123&foo=bar"
 		 */
 		readonly search: string,
 	},

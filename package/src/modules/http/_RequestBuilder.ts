@@ -16,6 +16,8 @@ export class RequestBuilder implements Request {
 
 	readonly url: Request["url"]
 
+	readonly origin: Request["origin"]
+
 	readonly referrer: Request["referrer"]
 
 	readonly referrerPolicy: Request["referrerPolicy"]
@@ -26,6 +28,7 @@ export class RequestBuilder implements Request {
 		init: {
 			headers: Parameters<Parameters<Spec["httpRequestListener"]>[0]>[0]["headers"],
 			method: Request["method"],
+			origin: Request["origin"],
 			url: Request["url"],
 			referrer: Request["referrer"],
 			referrerPolicy: Request["referrerPolicy"],
@@ -39,6 +42,7 @@ export class RequestBuilder implements Request {
 
 		this.method = init.method
 		this.url = init.url
+		this.origin = init.origin
 		this.referrer = init.referrer
 		this.referrerPolicy = init.referrerPolicy
 	}
@@ -78,10 +82,11 @@ export class RequestBuilder implements Request {
 	json(): Promise<any> {
 		if(!this._bodyUsed) {
 			this._bodyUsed = true
-			return NativeReactNativeEcho.httpGetRequestJson(this.serverID, this.requestID)
+			return NativeReactNativeEcho.httpGetRequestText(this.serverID, this.requestID)
 				.then(string => {
 					if(string) {
-						return JSON.stringify(string)
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+						return JSON.parse(string)
 					}
 					throw new SyntaxError("The request body cannot be parsed as JSON")
 				})
