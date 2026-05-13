@@ -429,6 +429,7 @@ export class Server implements ServerRouteInterface {
 		NativeReactNativeEcho
 			.httpServerStop(this.id)
 
+		this.port = -1
 		this.registeredServerEvent.on_close?.()
 	}
 
