@@ -1,1 +1,147 @@
-package id.sufeni.oss.reactnativeechoimport com.facebook.react.bridge.Argumentsimport com.facebook.react.bridge.Promiseimport com.facebook.react.bridge.ReactApplicationContextimport com.facebook.react.bridge.ReadableMapimport id.sufeni.oss.reactnativeecho.http.Serverimport id.sufeni.oss.reactnativeecho.http.ServerOptionsclass ReactNativeEchoModule(	reactApplicationContext: ReactApplicationContext,) : NativeReactNativeEchoSpec(reactApplicationContext) {  private val httpServers =    mutableMapOf<String, Server>()  override fun httpCreateServer(    serverID: String,    options: ReadableMap,  ) {    val serverOptions = object : ServerOptions {      override val routeHandlerTimeout =        options.getDouble("routeHandlerTimeout").toLong()    }    val httpServer = Server(      options = serverOptions,    ) { requestID, request ->      val jsRequestObject = Arguments.createMap()      jsRequestObject.putString("serverID", serverID)      jsRequestObject.putString("requestID", requestID)      // ++++ Headers +++++      val headers = Arguments.createMap()      request.headers.forEach { key, _ ->        request.headers[key]?.let {          headers.putString(key, it)        }      }      jsRequestObject.putMap("headers", headers)      // ----- Headers -----      // +++++ Method +++++      jsRequestObject.putString("method", request.method)      // ----- Method      // +++++ Origin +++++      val origin = Arguments.createMap()      origin.putString("host", request.origin.host)      origin.putString("port", request.origin.port)      origin.putString("protocol", request.origin.protocol)      jsRequestObject.putMap("origin", origin)      // ----- Origin -----      // +++++ Url +++++      val url = Arguments.createMap()      url.putString("pathname", request.url.pathname)      url.putString("search", request.url.search)      jsRequestObject.putMap("url", url)      // ----- Url -----      // +++++ Referrer & Referrer-Policy +++++      jsRequestObject.putString("referrer", request.referrer)      jsRequestObject.putString("referrerPolicy", request.referrerPolicy)      // ----- Referrer & Referrer-Policy -----      emitHttpRequestListener(jsRequestObject)    }    httpServers[serverID] = httpServer  }  override fun httpServerListen(    serverID: String,    port: Double,    promise: Promise?,  ) {    val httpServer = httpServers[serverID]    if(httpServer != null) {      httpServer.listen(        port.toUInt().toUShort(),      ) {        promise?.resolve("listening")      }    } else {      promise?.reject("ECHO_HTTP_SERVER_ALREADY_LISTENED", "Server is already listened")    }  }  override fun httpServerClose(serverID: String) {    httpServers[serverID]?.close()  }  override fun httpWriteResponse(    serverID: String,    requestID: String,    responseObject: ReadableMap?,    promise: Promise,  ) {    val httpServer = httpServers[serverID]    if(httpServer != null) {      httpServer.writeResponse(        requestID,        responseObject,      )      promise.resolve(null)    } else {      promise.reject("ECHO_HTTP_SERVER_NOT_FOUND", "Server not found")    }  }  override fun httpGetRequestFormData(    serverID: String,    requestID: String,    promise: Promise,  ) {    val httpServer = httpServers[serverID]    if(httpServer != null) {      httpServer.routeRequestFormData(requestID) { result ->        promise.resolve(result)      }    } else {      promise.reject("ECHO_HTTP_SERVER_NOT_FOUND", "Server not found")    }  }  override fun httpGetRequestText(    serverID: String,    requestID: String,    promise: Promise,  ) {    val httpServer = httpServers[serverID]    if(httpServer != null) {      httpServer.routeRequestText(requestID) { result ->        promise.resolve(result)      }    } else {      promise.reject("ECHO_HTTP_SERVER_NOT_FOUND", "Server not found")    }  }  companion object {    const val NAME = NativeReactNativeEchoSpec.NAME  }}
+package id.sufeni.oss.reactnativeecho
+
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.Promise
+import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReadableMap
+import id.sufeni.oss.reactnativeecho.http.Server
+import id.sufeni.oss.reactnativeecho.http.ServerOptions
+
+class ReactNativeEchoModule(
+	reactApplicationContext: ReactApplicationContext,
+) : NativeReactNativeEchoSpec(reactApplicationContext) {
+
+  private val httpServers =
+    mutableMapOf<String, Server>()
+
+  override fun httpCreateServer(
+    serverID: String,
+    options: ReadableMap,
+  ) {
+    val serverOptions = object : ServerOptions {
+      override val routeHandlerTimeout =
+        options.getDouble("routeHandlerTimeout").toLong()
+    }
+
+    val httpServer = Server(
+      options = serverOptions,
+    ) { requestID, request ->
+      val jsRequestObject = Arguments.createMap()
+
+      jsRequestObject.putString("serverID", serverID)
+      jsRequestObject.putString("requestID", requestID)
+
+      // ++++ Headers +++++
+      val headers = Arguments.createMap()
+      request.headers.forEach { key, _ ->
+        request.headers[key]?.let {
+          headers.putString(key, it)
+        }
+      }
+      jsRequestObject.putMap("headers", headers)
+      // ----- Headers -----
+
+      // +++++ Method +++++
+      jsRequestObject.putString("method", request.method)
+      // ----- Method
+
+      // +++++ Origin +++++
+      val origin = Arguments.createMap()
+      origin.putString("host", request.origin.host)
+      origin.putString("port", request.origin.port)
+      origin.putString("protocol", request.origin.protocol)
+      jsRequestObject.putMap("origin", origin)
+      // ----- Origin -----
+
+      // +++++ Url +++++
+      val url = Arguments.createMap()
+      url.putString("pathname", request.url.pathname)
+      url.putString("search", request.url.search)
+      jsRequestObject.putMap("url", url)
+      // ----- Url -----
+
+      // +++++ Referrer & Referrer-Policy +++++
+      jsRequestObject.putString("referrer", request.referrer)
+      jsRequestObject.putString("referrerPolicy", request.referrerPolicy)
+      // ----- Referrer & Referrer-Policy -----
+
+      emitHttpRequestListener(jsRequestObject)
+    }
+
+    httpServers[serverID] = httpServer
+  }
+
+  override fun httpServerListen(
+    serverID: String,
+    port: Double,
+    promise: Promise?,
+  ) {
+    val httpServer = httpServers[serverID]
+    if(httpServer != null) {
+      httpServer.listen(
+        port.toUInt().toUShort(),
+      ) {
+        promise?.resolve("listening")
+      }
+    } else {
+      promise?.reject("ECHO_HTTP_SERVER_ALREADY_LISTENED", "Server is already listened")
+    }
+  }
+
+  override fun httpServerClose(serverID: String) {
+    httpServers[serverID]?.close()
+  }
+
+  override fun httpWriteResponse(
+    serverID: String,
+    requestID: String,
+    responseObject: ReadableMap?,
+    promise: Promise,
+  ) {
+    val httpServer = httpServers[serverID]
+    if(httpServer != null) {
+      httpServer.writeResponse(
+        requestID,
+        responseObject,
+      )
+      promise.resolve(null)
+    } else {
+      promise.reject("ECHO_HTTP_SERVER_NOT_FOUND", "Server not found")
+    }
+  }
+
+  override fun httpGetRequestFormData(
+    serverID: String,
+    requestID: String,
+    promise: Promise,
+  ) {
+    val httpServer = httpServers[serverID]
+    if(httpServer != null) {
+      httpServer.routeRequestFormData(requestID) { result ->
+        promise.resolve(result)
+      }
+    } else {
+      promise.reject("ECHO_HTTP_SERVER_NOT_FOUND", "Server not found")
+    }
+  }
+
+  override fun httpGetRequestText(
+    serverID: String,
+    requestID: String,
+    promise: Promise,
+  ) {
+    val httpServer = httpServers[serverID]
+    if(httpServer != null) {
+      httpServer.routeRequestText(requestID) { result ->
+        promise.resolve(result)
+      }
+    } else {
+      promise.reject("ECHO_HTTP_SERVER_NOT_FOUND", "Server not found")
+    }
+  }
+
+  companion object {
+    const val NAME = NativeReactNativeEchoSpec.NAME
+  }
+
+}
