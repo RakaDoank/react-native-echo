@@ -50,12 +50,15 @@ export async function responseToCodegenObject(
 
 	} else if(response.body instanceof Blob) {
 
-		const
-			type =
-				response.body.type,
+		let text: string
 
-			text =
-				await response.body.text()
+		const type = response.body.type
+
+		try {
+			text = await response.body.text()
+		} catch {
+			text = ""
+		}
 
 		obj.body = {
 			bodyType: "blob",
@@ -66,7 +69,7 @@ export async function responseToCodegenObject(
 	}
 
 	response.headers.forEach((value, key) => {
-		obj.headers[value] = key
+		obj.headers[key] = value
 	})
 
 	return obj

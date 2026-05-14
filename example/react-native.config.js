@@ -14,7 +14,7 @@ module.exports = {
 		 * https://github.com/react-native-community/cli/blob/main/docs/autolinking.md#how-can-i-autolink-a-local-library
 		 */
 		[libraryPackageJson.name]: {
-			root: node_path.join(__dirname, "../package"),
+			root: node_path.join(__dirname, "..", "package"),
 			platforms: {
 				// Codegen script incorrectly fails without this
 				// So we explicitly specify the platforms with empty object

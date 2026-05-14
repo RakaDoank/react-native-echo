@@ -4,5 +4,5 @@ interface ServerOptions {
   /**
    * Set the default timeout (in milliseconds) from JS
    */
-  val routeHandleTimeout: Long
+  val routeHandlerTimeout: Long
 }

@@ -51,6 +51,9 @@ export interface Request {
 		readonly search: string,
 	},
 
+	/**
+	 * The `Request.referer` from the Web API is actually mispelled
+	 */
 	readonly referrer: string,
 
 	readonly referrerPolicy: string,

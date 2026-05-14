@@ -11,3 +11,4 @@ export type RouteHandler =
 		request: Request,
 	) =>
 		| Promise<Response>
+		| Response

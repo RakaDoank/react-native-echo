@@ -3,8 +3,18 @@
 		"expo/tsconfig.base",
 		"../tsconfig.base.json"
 	],
+	"compilerOptions": {
+		"paths": {
+			"react-native-echo": [
+				"../package/src/index"
+			]
+		}
+	},
 	"include": [
+		"../package/src/**/*",
 		"./app.config.ts",
-		"./src/**/*"
+		"./src/**/*",
+		".expo/types/**/*.ts",
+		"expo-env.d.ts"
 	]
 }

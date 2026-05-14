@@ -106,8 +106,8 @@ export class RequestBuilder implements Request {
 			this._bodyUsed = true
 			return NativeReactNativeEcho.httpGetRequestText(this.serverID, this.requestID)
 				.then(string => {
-					if(string) {
-						return JSON.stringify(string)
+					if(typeof string == "string") {
+						return string
 					}
 					throw new TypeError("The body cannot be parsed as a FormData object")
 				})

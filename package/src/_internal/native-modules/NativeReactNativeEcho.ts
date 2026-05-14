@@ -33,11 +33,15 @@ export interface Spec extends TurboModule {
 		// +++++ Headers +++++
 		method: string,
 		headers: CodegenTypes.UnsafeObject,
-		originHost: string,
-		originPort: string,
-		originProtocol: string,
-		urlPathname: string,
-		urlSearch: string,
+		origin: {
+			host: string,
+			port: string,
+			protocol: string,
+		},
+		url: {
+			pathname: string,
+			search: string,
+		},
 		referrer: string,
 		referrerPolicy: string,
 		// ----- Headers -----

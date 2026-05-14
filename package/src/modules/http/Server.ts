@@ -104,6 +104,7 @@ export class Server implements ServerRouteInterface {
 		this.requestListenerSubscription =
 			NativeReactNativeEcho
 				.httpRequestListener(nativeRequest => {
+					console.log("httpRequestListener", nativeRequest)
 					if(
 						nativeRequest &&
 						typeof nativeRequest == "object" &&
@@ -119,12 +120,12 @@ export class Server implements ServerRouteInterface {
 					) {
 
 						const route =
-							this.registeredRoute[nativeRequest.urlPathname] ??
-							this.registeredRouteWithMethod[nativeRequest.urlPathname]?.[nativeRequest.method]
+							this.registeredRoute[nativeRequest.url?.pathname || ""] ??
+							this.registeredRouteWithMethod[nativeRequest.url?.pathname || ""]?.[nativeRequest.method]
 
 						if(route?.handler) {
-							route
-								.handler(
+							Promise.resolve(
+								route.handler(
 									new RequestBuilder(
 										nativeRequest.serverID,
 										nativeRequest.requestID,
@@ -132,19 +133,20 @@ export class Server implements ServerRouteInterface {
 											headers: nativeRequest.headers,
 											method: nativeRequest.method,
 											origin: {
-												host: nativeRequest.originHost,
-												port: nativeRequest.originPort,
-												protocol: nativeRequest.originProtocol,
+												host: nativeRequest.origin.host,
+												port: nativeRequest.origin.port,
+												protocol: nativeRequest.origin.protocol,
 											},
 											url: {
-												pathname: nativeRequest.urlPathname,
-												search: nativeRequest.urlSearch,
+												pathname: nativeRequest.url.pathname,
+												search: nativeRequest.url.search,
 											},
 											referrer: nativeRequest.referrer,
 											referrerPolicy: nativeRequest.referrerPolicy,
 										},
 									),
-								)
+								),
+							)
 								.then(response => {
 									this.sendNativeResponse(
 										nativeRequest.requestID,
@@ -162,7 +164,7 @@ export class Server implements ServerRouteInterface {
 									if(route.errorHandler) {
 										// A route handler thrown an Error in the specific request
 										// Use their error handler.
-										route.errorHandler(error)
+										Promise.resolve(route.errorHandler(error))
 											.then(response => {
 												this.sendNativeResponse(
 													nativeRequest.requestID,
@@ -172,19 +174,25 @@ export class Server implements ServerRouteInterface {
 											.catch(e2 => {
 												// The error handler in specific request throw an Error again
 												// Use the fallback error handler
-												this.routeErrorHandler?.(
-													e2 instanceof Error
-														? e2
-														: new ServerError({
-															code: ServerErrorCode.UNKNOWN,
-															message: "Unknown error",
-														}),
+												Promise.resolve(
+													this.routeErrorHandler?.(
+														e2 instanceof Error
+															? e2
+															: new ServerError({
+																code: ServerErrorCode.UNKNOWN,
+																message: "Unknown error",
+															}),
+													),
 												)
 													.then(response => {
-														this.sendNativeResponse(
-															nativeRequest.requestID,
-															response,
-														)
+														if(response) {
+															this.sendNativeResponse(
+																nativeRequest.requestID,
+																response,
+															)
+														} else {
+															throw new Error()
+														}
 													})
 													.catch(e3 => {
 														// The fallback error handler throw an Error again
@@ -206,7 +214,9 @@ export class Server implements ServerRouteInterface {
 									} else if(this.routeErrorHandler) {
 										// No route handler found in the specific request
 										// Use fallback route error handler
-										this.routeErrorHandler(error)
+										Promise.resolve(
+											this.routeErrorHandler(error),
+										)
 											.then(response => {
 												this.sendNativeResponse(
 													nativeRequest.requestID,
@@ -248,13 +258,14 @@ export class Server implements ServerRouteInterface {
 							// Specific route was not found
 							// Send an 404 error
 
-							this
-								.routeErrorHandler(
+							Promise.resolve(
+								this.routeErrorHandler(
 									new RouteError({
 										code: RouteErrorCode.FOUR_O_FOUR,
 										message: "Unspecified route",
 									}),
-								)
+								),
+							)
 								.then(response => {
 									this.sendNativeResponse(
 										nativeRequest.requestID,
@@ -339,17 +350,21 @@ export class Server implements ServerRouteInterface {
 		requestID: string,
 		response: Response,
 	): void {
-		NativeReactNativeEcho
-			.httpWriteResponse(
-				this.id,
-				requestID,
-				responseToCodegenObject(response),
-			)
-			.then(this.registeredServerEvent?.on_response)
-			.catch(err => {
-				if(__DEV__) {
-					console.log("react-native-echo :: Error occured when send native response", err)
-				}
+		responseToCodegenObject(response)
+			.then(data => {
+				console.log("sendNativeResponse", requestID, data)
+				NativeReactNativeEcho
+					.httpWriteResponse(
+						this.id,
+						requestID,
+						data,
+					)
+					.then(this.registeredServerEvent?.on_response)
+					.catch(err => {
+						if(__DEV__) {
+							console.log("react-native-echo :: Error occured when send native response", err)
+						}
+					})
 			})
 	}
 

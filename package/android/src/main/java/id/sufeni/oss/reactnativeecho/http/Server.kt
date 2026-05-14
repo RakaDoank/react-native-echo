@@ -2,6 +2,7 @@ package id.sufeni.oss.reactnativeecho.http
 
 import com.facebook.react.bridge.ReadableMap
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
@@ -15,16 +16,17 @@ import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 class Server(
   private val options: ServerOptions,
-  val onRouteRequest: (requestID: String, routeRequest: RouteRequest) -> Unit,
+  val onRouteRequest: (requestID: String, request: Request) -> Unit,
 ) {
 
   private val routeRequests =
-    mutableMapOf<RequestID, RouteRequest>()
+    mutableMapOf<RequestID, Request>()
 
   private val deferredResponses =
     mutableMapOf<RequestID, CompletableDeferred<ReadableMap?>>()
@@ -37,7 +39,9 @@ class Server(
     onStart: () -> Unit,
   ) {
     // already guarded by JS
+    // in the /react-native-echo/package/src/modules/http/Server.ts
     // to prevent this method is getting invoked more than once
+
     server = embeddedServer(
       Netty,
       port = port.toInt(),
@@ -46,24 +50,28 @@ class Server(
       install(ForwardedHeaders)
 
       routing {
-        route("{...}") {
+        route("/{...}") {
           handle {
             val requestID = UUID.randomUUID().toString()
-            val routeRequest = RouteRequest(call)
+            val routeRequest = Request(call)
             routeRequests[requestID] = routeRequest
 
             val deferredResponse = CompletableDeferred<ReadableMap?>()
             deferredResponses[requestID] = deferredResponse
 
-            onRouteRequest(requestID, routeRequest)
-
-            val responseCodegenObject = withTimeout(options.routeHandleTimeout) {
-              try {
-                deferredResponse.await()
-              } catch(_: CancellationException) {
-                null
+            var responseCodegenObject: ReadableMap? = null
+            val deferredResponseCodegenObject = call.application.async {
+              responseCodegenObject = withTimeout(options.routeHandlerTimeout) {
+                try {
+                  onRouteRequest(requestID, routeRequest)
+                  deferredResponse.await()
+                } catch(_: CancellationException) {
+                  null
+                }
               }
             }
+
+            deferredResponseCodegenObject.await()
 
             deferredResponses.remove(requestID)
 
@@ -73,15 +81,8 @@ class Server(
               // see the complete object definition of `responseCodegenObject`
               // at /react-native-echo/package/src/modules/http/_response-to-codegen-object.ts
 
-              val headers = responseCodegenObject.getMap("headers")
-              headers?.entryIterator?.forEach { entry ->
-                if(entry.value is String) {
-                  call.response.header(entry.key, entry.value as String)
-                }
-              }
-
-              val status = responseCodegenObject.getDouble("status").toInt()
-              val statusText = responseCodegenObject.getString("statusText")
+              val status = responseCodegenObject!!.getDouble("status").toInt()
+              val statusText = responseCodegenObject!!.getString("statusText")
               call.response.status(
                 HttpStatusCode(
                   status,
@@ -89,7 +90,14 @@ class Server(
                 ),
               )
 
-              val bodyText = responseCodegenObject.getString("body")
+              val headers = responseCodegenObject!!.getMap("headers")
+              headers?.entryIterator?.forEach { entry ->
+                if(entry.value is String) {
+                  call.response.header(entry.key, entry.value as String)
+                }
+              }
+
+              val bodyText = responseCodegenObject!!.getString("body")
               if(bodyText != null) {
                 call.respondText(bodyText)
               } else {
@@ -103,7 +111,9 @@ class Server(
 
     }.start(wait = false)
 
-    onStart()
+    server?.application?.monitor?.subscribe(ApplicationStarted) {
+      onStart()
+    }
   }
 
   fun close() {
@@ -114,7 +124,7 @@ class Server(
 
   fun routeRequest(
     requestID: String,
-  ): RouteRequest? {
+  ): Request? {
     return routeRequests[requestID]
   }
 
@@ -127,6 +137,20 @@ class Server(
       CoroutineScope(server!!.application.coroutineContext).launch {
         onResult(
           routeRequest.formData()
+        )
+      }
+    }
+  }
+
+  fun routeRequestText(
+    requestID: String,
+    onResult: (result: String?) -> Unit,
+  ) {
+    val routeRequest = this.routeRequest(requestID)
+    if(server != null && routeRequest != null) {
+      CoroutineScope(server!!.application.coroutineContext).launch {
+        onResult(
+          routeRequest.text()
         )
       }
     }
