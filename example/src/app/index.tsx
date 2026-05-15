@@ -15,6 +15,8 @@ import * as Echo from "react-native-echo"
 
 export default function Page() {
 
+	CarbonStyleSheet.use()
+
 	useEffect(() => {
 		const server = new Echo.Http.Server()
 
@@ -132,10 +134,22 @@ export default function Page() {
 				CarbonStyleSheet.g.px_05,
 			] }
 		>
-			<Text>
-				Minimize this app, and hit the server
+			<Text
+				style={ [
+					carbonStyleSheet.text,
+				] }
+			>
+				Hit the server
 			</Text>
 		</View>
 	)
 
 }
+
+const
+	carbonStyleSheet =
+		CarbonStyleSheet.create({
+			text: {
+				color: CarbonStyleSheet.color.text_primary,
+			},
+		})

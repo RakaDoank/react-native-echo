@@ -124,6 +124,8 @@ dependencies {
           :: react-native-echo ::
           For future readers, this library is not updated since React Native was using Kotlin ${kotlinToKtorVersionLastEntry.key}.
           Please, help this library to update the map of Kotlin version to compatible Ktor version.
+          
+          Resolved to Ktor $ktorVersion
         """.trimIndent()
       )
     } else {

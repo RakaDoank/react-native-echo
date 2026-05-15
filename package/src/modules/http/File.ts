@@ -53,7 +53,8 @@ export class File {
 
 		if(
 			data &&
-			typeof data === "object"
+			typeof data == "object" &&
+			typeof data.uri == "string"
 		) {
 
 			if(typeof data.name == "string") {

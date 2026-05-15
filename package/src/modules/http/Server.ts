@@ -122,6 +122,8 @@ export class Server implements ServerRouteInterface {
 							this.registeredRoute[nativeRequest.url?.pathname || ""] ??
 							this.registeredRouteWithMethod[nativeRequest.url?.pathname || ""]?.[nativeRequest.method]
 
+						console.log("route ", route)
+
 						if(route?.handler) {
 							Promise.resolve(
 								route.handler(
@@ -454,6 +456,9 @@ export class Server implements ServerRouteInterface {
 				.httpServerClose(this.id)
 
 			this.port = -1
+			this.registeredRoute = {}
+			this.registeredRouteWithMethod = {}
+
 			this.registeredServerEvent.on_close?.()
 		}
 	}
@@ -513,9 +518,9 @@ export class Server implements ServerRouteInterface {
 	) {
 		this.registerRouteWithMethod({
 			path,
+			method: "GET",
 			handler,
 			errorHandler,
-			method: "GET",
 		})
 	}
 

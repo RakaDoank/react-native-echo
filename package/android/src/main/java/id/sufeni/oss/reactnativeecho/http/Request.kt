@@ -17,6 +17,8 @@ import io.ktor.server.request.queryString
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.request.receiveText
 import io.ktor.server.routing.RoutingCall
+import io.ktor.util.cio.writeChannel
+import io.ktor.utils.io.copyAndClose
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -80,19 +82,17 @@ class Request(
           }
           is PartData.FileItem -> {
            if(part.name != null) {
-             val defaultFilename = "react-native-echo-tmp-file"
-             val filename = part.originalFileName ?: defaultFilename
+             val defaultPrefix = "rn_echo_tmp"
 
              val temporaryFile =
-               withContext(Dispatchers.IO) {
-                 File.createTempFile(
-                   filename,
-                   part.contentType?.fileExtensions()[0]?.let {
-                     ".$it"
-                   },
-                   reactApplicationContext.cacheDir,
-                 )
-               }
+               File.createTempFile(
+                 defaultPrefix,
+                 part.contentType?.fileExtensions()[0]?.let {
+                   ".$it"
+                 },
+                 reactApplicationContext.cacheDir,
+               )
+             part.provider().copyAndClose(temporaryFile.writeChannel())
 
              partFileItems[part.name!!] = temporaryFile
 
@@ -100,7 +100,7 @@ class Request(
              // /react-native-echo/package/src/modules/http/_NativeRequest.ts
              val mapFile = Arguments.createMap()
              mapFile.putString("name", temporaryFile.name)
-             mapFile.putString("originalName", filename)
+             mapFile.putString("originalName", part.originalFileName ?: "")
              mapFile.putLong("size", temporaryFile.length())
              mapFile.putString("type", part.contentType?.toString() ?: "")
              mapFile.putString("uri", Uri.fromFile(temporaryFile).toString())

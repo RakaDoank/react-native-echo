@@ -118,7 +118,12 @@ class Server(
                 if(bodyText != null) {
                   call.respondText(bodyText)
                 } else {
-                  call.respond(HttpStatusCode.NoContent)
+                  call.respond(
+                    HttpStatusCode(
+                      status,
+                      statusText ?: HttpStatusCode.fromValue(status).description,
+                    )
+                  )
                 }
               } else if(bodyType == "blob") {
                 // TODO : blob
