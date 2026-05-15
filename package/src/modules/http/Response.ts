@@ -20,7 +20,7 @@ export class Response {
 	 * If you are in the future want to serve a remote file,
 	 * you can fetch the file first, and send to the client back with `Blob`.
 	 */
-	static file(
+	static fileUri(
 		uri: string,
 		init?: ConstructorParameters<typeof Response>[1],
 	) {

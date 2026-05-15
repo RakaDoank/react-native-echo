@@ -24,6 +24,7 @@ class ReactNativeEchoModule(
     }
 
     val httpServer = Server(
+      reactApplicationContext = reactApplicationContext,
       options = serverOptions,
     ) { requestID, request ->
       val jsRequestObject = Arguments.createMap()

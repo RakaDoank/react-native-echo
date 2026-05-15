@@ -51,7 +51,10 @@ export default {
 			"expo-build-properties",
 			{
 				android: {
-					"minSdkVersion": 26, // required for Netty
+					minSdkVersion: 26, // required for Netty
+					packagingOptions: {
+						merge: ["META-INF/*"],
+					},
 				},
 				ios: {
 					deploymentTarget: "26.0",

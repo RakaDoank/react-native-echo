@@ -2,11 +2,19 @@ import NativeReactNativeEcho, {
 	type Spec,
 } from "../../_internal/native-modules/NativeReactNativeEcho"
 
+import {
+	File,
+} from "./File"
+
+import {
+	FormData,
+} from "./FormData"
+
 import type {
 	Request,
 } from "./Request"
 
-export class RequestBuilder implements Request {
+export class NativeRequest implements Request {
 
 	private _bodyUsed: boolean = false
 
@@ -59,8 +67,20 @@ export class RequestBuilder implements Request {
 					if(object && typeof object == "object") {
 						const formData = new FormData()
 						Object.entries(object).forEach(([key, val]) => {
-							if(typeof val == "string") {
-								formData.append(key, val)
+							const value = val as string | File
+
+							if(typeof value == "string") {
+								formData.append(key, value)
+							} else if(
+								value &&
+								typeof value == "object" &&
+								typeof value.name == "string" &&
+								typeof value.uri == "string"
+							) {
+								formData.append(
+									key,
+									new File(value),
+								)
 							}
 						})
 						return formData

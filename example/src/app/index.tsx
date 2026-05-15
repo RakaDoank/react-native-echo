@@ -19,37 +19,21 @@ export default function Page() {
 		const server = new Echo.Http.Server()
 
 		server.get(
-			"/api/get",
-			request => {
-				console.log(request.url.pathname)
-				return Echo.Http.Response.json(
-					{
-						foo: "bar",
-						hello: "world",
-					},
-					{
-						status: 200,
-					},
-				)
-			},
-		)
-
-		server.get(
 			"/api/hello/world",
 			request => {
 				console.log(request.url.pathname)
 				return Echo.Http.Response.json(
 					{
 						string: "Hello World",
-						number: -1,
-						boolean: true,
+						number: 12345,
+						boolean: false,
 						array: [
 							{
-								message: "Ich komme aus Deutschland",
+								message: "Ich komme aus Osterreich",
 								null: null,
 							},
 							{
-								number: 99,
+								number: -1,
 								boolean: true,
 							},
 						],
@@ -68,6 +52,67 @@ export default function Page() {
 			},
 		)
 
+		server.post(
+			"/api/post",
+			async request => {
+				try {
+					const json = await request.json() as unknown as Record<string, string>
+					console.log("JSON ", json)
+					if(json && typeof json === "object") {
+						return Echo.Http.Response.json(
+							{
+								foo: "bar",
+								data: json,
+							},
+						)
+					}
+					return Echo.Http.Response.json(
+						{
+							foo: null,
+							data: null,
+						},
+					)
+				} catch(err) {
+					return Echo.Http.Response.json(
+						{
+							foo: null,
+							data: null,
+							error: err instanceof Error ? {
+								message: err.message,
+							} : undefined,
+						},
+					)
+				}
+			},
+		)
+
+		server.post(
+			"/api/formdata",
+			async request => {
+				try {
+					const formData = await request.formData()
+					formData.forEach((value, key) => {
+						console.log("formData entry :: ", key, value)
+					})
+					return Echo.Http.Response.json(
+						{
+							yeay: true,
+							file: formData.get("file1"),
+						},
+					)
+				} catch(err) {
+					return Echo.Http.Response.json(
+						{
+							yeay: false,
+							error: err instanceof Error ? {
+								message: err.message,
+							} : undefined,
+						},
+					)
+				}
+			},
+		)
+
 		server.listen(
 			4040,
 			function() {
@@ -75,9 +120,9 @@ export default function Page() {
 			},
 		)
 
-		// return () => {
-		// 	server.close()
-		// }
+		return () => {
+			server.close()
+		}
 	}, [])
 
 	return (

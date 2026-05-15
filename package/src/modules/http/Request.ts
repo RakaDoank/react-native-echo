@@ -1,3 +1,7 @@
+import type {
+	FormData,
+} from "./FormData"
+
 /**
  * Read a client request from a route handler in your server.
  * 

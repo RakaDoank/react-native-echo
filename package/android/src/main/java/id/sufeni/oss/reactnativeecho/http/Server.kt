@@ -1,8 +1,8 @@
 package id.sufeni.oss.reactnativeecho.http
 
+import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
@@ -12,7 +12,6 @@ import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
 import io.ktor.server.response.*
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 class Server(
+  private val reactApplicationContext: ReactApplicationContext,
   private val options: ServerOptions,
   val onRouteRequest: (requestID: String, request: Request) -> Unit,
 ) {
@@ -33,6 +33,13 @@ class Server(
 
   private var server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? =
     null
+
+  private fun generateRandomRequestID(): String {
+    val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+    return (1..16)
+      .map { allowedChars.random() }
+      .joinToString("")
+  }
 
   fun listen(
     port: UShort,
@@ -52,8 +59,11 @@ class Server(
       routing {
         route("/{...}") {
           handle {
-            val requestID = UUID.randomUUID().toString()
-            val routeRequest = Request(call)
+            val requestID = generateRandomRequestID()
+            val routeRequest = Request(
+              call = call,
+              reactApplicationContext = reactApplicationContext,
+            )
             routeRequests[requestID] = routeRequest
 
             val deferredResponse = CompletableDeferred<ReadableMap?>()
@@ -72,8 +82,12 @@ class Server(
             }
 
             deferredResponseCodegenObject.await()
-
             deferredResponses.remove(requestID)
+
+            // +++++ Clear the `RouteRequest` +++++
+            routeRequest.dispose()
+            routeRequests.remove(requestID)
+            // ----- Clear the `RouteRequest`
 
             if(responseCodegenObject == null) {
               call.respond(HttpStatusCode.NoContent)
@@ -97,11 +111,22 @@ class Server(
                 }
               }
 
-              val bodyText = responseCodegenObject!!.getString("body")
-              if(bodyText != null) {
-                call.respondText(bodyText)
+              val bodyType = responseCodegenObject!!.getString("bodyType")
+
+              if(bodyType == "text") {
+                val bodyText = responseCodegenObject!!.getString("body")
+                if(bodyText != null) {
+                  call.respondText(bodyText)
+                } else {
+                  call.respond(HttpStatusCode.NoContent)
+                }
+              } else if(bodyType == "blob") {
+                // TODO : blob
+                call.respond(HttpStatusCode.NoContent)
+              } else if(bodyType == "file-uri") {
+                // TODO : file-uri
+                call.respond(HttpStatusCode.NoContent)
               } else {
-                // TODO : blob and file-uri respond
                 call.respond(HttpStatusCode.NoContent)
               }
             }
@@ -111,14 +136,13 @@ class Server(
 
     }.start(wait = false)
 
-    server?.application?.monitor?.subscribe(ApplicationStarted) {
-      onStart()
-    }
+    onStart()
   }
 
   fun close() {
     if(server != null) {
       server!!.stop()
+      server = null
     }
   }
 

@@ -13,39 +13,29 @@ export async function responseToCodegenObject(
 	response: Response,
 ) {
 
-	const obj: {
-		body:
-			| string
-			| {
-				bodyType: "blob",
-				text: string,
-				type: string, // mime
-			}
-			| {
-				bodyType: "file-uri",
-				uri: string,
-				type?: string, // mime
-			},
-		headers: Record<string, string>,
-		status: Response["status"],
-		statusText: Response["statusText"],
-	} = {
-		body: "",
+	const objBase: CodegenObjectBase = {
 		headers: {},
 		status: response.status,
 		statusText: response.statusText,
 	}
 
+	let objBody: CodegenObjectBody
+
 	if(typeof response.body == "string") {
 
 		if(response.headers.get(Const.Headers.XReactNativeEchoResponseBody.NAME) == Const.Headers.XReactNativeEchoResponseBody.FILE_URI) {
-			obj.body = {
+			objBody = {
+				body: {
+					text: response.body,
+				},
 				bodyType: "file-uri",
-				uri: response.body,
 			}
 			response.headers.delete(Const.Headers.XReactNativeEchoResponseBody.NAME)
 		} else {
-			obj.body = response.body
+			objBody = {
+				body: response.body,
+				bodyType: "text",
+			}
 		}
 
 	} else if(response.body instanceof Blob) {
@@ -60,18 +50,54 @@ export async function responseToCodegenObject(
 			text = ""
 		}
 
-		obj.body = {
+		objBody = {
+			body: {
+				text,
+				type,
+			},
 			bodyType: "blob",
-			text,
-			type,
 		}
 
+	} else {
+		objBody = {
+			body: null,
+			bodyType: "text",
+		}
 	}
 
 	response.headers.forEach((value, key) => {
-		obj.headers[key] = value
+		objBase.headers[key] = value
 	})
 
-	return obj
+	return {
+		...objBase,
+		...objBody,
+	}
 
 }
+
+interface CodegenObjectBase {
+	headers: Record<string, string>,
+	status: Response["status"],
+	statusText: Response["statusText"],
+}
+
+type CodegenObjectBody =
+	| {
+		body: string | null,
+		bodyType: "text"
+	}
+	| {
+		body: {
+			text: string,
+			type: string, // mime,
+		} | null,
+		bodyType: "blob"
+	}
+	| {
+		body: {
+			text: string,
+			type?: string, // mime
+		} | null,
+		bodyType: "file-uri",
+	}

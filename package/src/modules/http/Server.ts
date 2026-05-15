@@ -40,8 +40,8 @@ import type {
 } from "./ServerRouteInterface"
 
 import {
-	RequestBuilder,
-} from "./_RequestBuilder"
+	NativeRequest,
+} from "./_NativeRequest"
 
 import {
 	responseToCodegenObject,
@@ -104,7 +104,6 @@ export class Server implements ServerRouteInterface {
 		this.requestListenerSubscription =
 			NativeReactNativeEcho
 				.httpRequestListener(nativeRequest => {
-					console.log("httpRequestListener", nativeRequest)
 					if(
 						nativeRequest &&
 						typeof nativeRequest == "object" &&
@@ -126,7 +125,7 @@ export class Server implements ServerRouteInterface {
 						if(route?.handler) {
 							Promise.resolve(
 								route.handler(
-									new RequestBuilder(
+									new NativeRequest(
 										nativeRequest.serverID,
 										nativeRequest.requestID,
 										{
@@ -296,12 +295,9 @@ export class Server implements ServerRouteInterface {
 								})
 						} else {
 							// Specific route was not found
-							// use the default response
-							this.defaultErrorResponseHandler(
+							this.sendNativeResponse(
 								nativeRequest.requestID,
-								{
-									status: 404,
-								},
+								new Response(null, { status: 404 }),
 							)
 						}
 
@@ -352,7 +348,6 @@ export class Server implements ServerRouteInterface {
 	): void {
 		responseToCodegenObject(response)
 			.then(data => {
-				console.log("sendNativeResponse", requestID, data)
 				NativeReactNativeEcho
 					.httpWriteResponse(
 						this.id,
@@ -379,23 +374,19 @@ export class Server implements ServerRouteInterface {
 			metadata?: unknown,
 		},
 	) {
-		const status = Math.min(Math.max(data.status, 100), 599)
-
-		NativeReactNativeEcho
-			.httpWriteResponse(
-				this.id,
-				requestID,
-				responseToCodegenObject(
-					Response.json({
-						status,
-						error: data.error,
-						metadata: data.metadata,
-					}, {
-						status,
-					}),
-				),
-			)
-			.then(this.registeredServerEvent.on_response)
+		this.sendNativeResponse(
+			requestID,
+			Response.json(
+				{
+					status: data.status,
+					error: data.error,
+					metadata: data.metadata,
+				},
+				{
+					status: data.status,
+				},
+			),
+		)
 	}
 
 	private registerRouteWithMethod(
