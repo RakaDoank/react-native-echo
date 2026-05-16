@@ -22,12 +22,11 @@ export default function Page() {
 
 		server.get(
 			"/api/hello/world",
-			request => {
-				console.log(request.url.pathname)
+			() => {
 				return Echo.Http.Response.json(
 					{
 						string: "Hello World",
-						number: 12345,
+						number: Math.random(),
 						boolean: false,
 						array: [
 							{
@@ -55,23 +54,14 @@ export default function Page() {
 		)
 
 		server.post(
-			"/api/post",
+			"/api/json",
 			async request => {
 				try {
 					const json = await request.json() as unknown as Record<string, string>
-					console.log("JSON ", json)
-					if(json && typeof json === "object") {
-						return Echo.Http.Response.json(
-							{
-								foo: "bar",
-								data: json,
-							},
-						)
-					}
 					return Echo.Http.Response.json(
 						{
-							foo: null,
-							data: null,
+							foo: "bar",
+							data: json,
 						},
 					)
 				} catch(err) {
@@ -93,9 +83,6 @@ export default function Page() {
 			async request => {
 				try {
 					const formData = await request.formData()
-					formData.forEach((value, key) => {
-						console.log("formData entry :: ", key, value)
-					})
 					return Echo.Http.Response.json(
 						{
 							yeay: true,
