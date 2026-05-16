@@ -13,13 +13,13 @@ export async function responseToCodegenObject(
 	response: Response,
 ) {
 
-	const objBase: CodegenObjectBase = {
+	const objBase: ResponseCodegenObject = {
 		headers: {},
 		status: response.status,
 		statusText: response.statusText,
 	}
 
-	let objBody: CodegenObjectBody
+	let objBody: ResponseCodegenObjectBody
 
 	if(typeof response.body == "string") {
 
@@ -76,13 +76,13 @@ export async function responseToCodegenObject(
 
 }
 
-interface CodegenObjectBase {
+interface ResponseCodegenObject {
 	headers: Record<string, string>,
 	status: Response["status"],
 	statusText: Response["statusText"],
 }
 
-type CodegenObjectBody =
+type ResponseCodegenObjectBody =
 	| {
 		body: string | null,
 		bodyType: "text"
