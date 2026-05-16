@@ -101,128 +101,96 @@ export class Server implements ServerRouteInterface {
 				},
 			)
 
-		this.requestListenerSubscription =
-			NativeReactNativeEcho
-				.httpRequestListener(nativeRequest => {
-					if(
-						nativeRequest &&
-						typeof nativeRequest == "object" &&
+		this.requestListenerSubscription = NativeReactNativeEcho.httpRequestListener(nativeRequest => {
+			if(
+				nativeRequest &&
+				typeof nativeRequest == "object" &&
 
-						typeof nativeRequest.serverID == "string" &&
+				typeof nativeRequest.serverID == "string" &&
+				// What kind of cosmic rays will change this value?
+				nativeRequest.serverID == this.id &&
 
-						// What kind of cosmic rays will change this value?
-						nativeRequest.serverID == this.id &&
+				// Native side has to provide an `requestID` string.
+				// So JS side can write a correct response to a specific client request
+				typeof nativeRequest.requestID == "string"
+			) {
 
-						// Native side has to provide an `requestID` string.
-						// So JS side can write a correct response to a specific client request
-						typeof nativeRequest.requestID == "string"
-					) {
+				const route =
+					this.registeredRoute[nativeRequest.url?.pathname || ""] ??
+					this.registeredRouteWithMethod[nativeRequest.url?.pathname || ""]?.[nativeRequest.method]
 
-						const route =
-							this.registeredRoute[nativeRequest.url?.pathname || ""] ??
-							this.registeredRouteWithMethod[nativeRequest.url?.pathname || ""]?.[nativeRequest.method]
-
-						if(route?.handler) {
-							Promise.resolve(
-								route.handler(
-									new NativeRequest(
-										nativeRequest.serverID,
-										nativeRequest.requestID,
-										{
-											headers: nativeRequest.headers,
-											method: nativeRequest.method,
-											origin: {
-												host: nativeRequest.origin.host,
-												port: nativeRequest.origin.port,
-												protocol: nativeRequest.origin.protocol,
-											},
-											url: {
-												pathname: nativeRequest.url.pathname,
-												search: nativeRequest.url.search,
-											},
-											referrer: nativeRequest.referrer,
-											referrerPolicy: nativeRequest.referrerPolicy,
-										},
-									),
-								),
+				if(route?.handler) {
+					Promise.resolve(
+						route.handler(
+							new NativeRequest(
+								nativeRequest.serverID,
+								nativeRequest.requestID,
+								{
+									headers: nativeRequest.headers,
+									method: nativeRequest.method,
+									origin: {
+										host: nativeRequest.origin.host,
+										port: nativeRequest.origin.port,
+										protocol: nativeRequest.origin.protocol,
+									},
+									url: {
+										pathname: nativeRequest.url.pathname,
+										search: nativeRequest.url.search,
+									},
+									referrer: nativeRequest.referrer,
+									referrerPolicy: nativeRequest.referrerPolicy,
+								},
+							),
+						),
+					)
+						.then(response => {
+							this.sendNativeResponse(
+								nativeRequest.requestID,
+								response,
 							)
-								.then(response => {
-									this.sendNativeResponse(
-										nativeRequest.requestID,
-										response,
-									)
+						})
+						.catch(e1 => {
+							const error = e1 instanceof Error
+								? e1
+								: new RouteError({
+									code: RouteErrorCode.UNKNOWN,
+									message: "Unknown error",
 								})
-								.catch(e1 => {
-									const error = e1 instanceof Error
-										? e1
-										: new RouteError({
-											code: RouteErrorCode.UNKNOWN,
-											message: "Unknown error",
-										})
 
-									if(route.errorHandler) {
-										// A route handler thrown an Error in the specific request
-										// Use their error handler.
-										Promise.resolve(route.errorHandler(error))
-											.then(response => {
-												this.sendNativeResponse(
-													nativeRequest.requestID,
-													response,
-												)
-											})
-											.catch(e2 => {
-												// The error handler in specific request throw an Error again
-												// Use the fallback error handler
-												Promise.resolve(
-													this.routeErrorHandler?.(
-														e2 instanceof Error
-															? e2
-															: new ServerError({
-																code: ServerErrorCode.UNKNOWN,
-																message: "Unknown error",
-															}),
-													),
-												)
-													.then(response => {
-														if(response) {
-															this.sendNativeResponse(
-																nativeRequest.requestID,
-																response,
-															)
-														} else {
-															throw new Error()
-														}
-													})
-													.catch(e3 => {
-														// The fallback error handler throw an Error again
-														// Use default error response
-														this.defaultErrorResponseHandler(
-															nativeRequest.requestID,
-															{
-																status: 500,
-																error: {
-																	code: "ECHO_UNHANDLED_ERROR",
-																	message: e3 instanceof Error
-																		? e3.message || "Internal server error"
-																		: "Internal server error",
-																},
-															},
-														)
-													})
-											})
-									} else if(this.routeErrorHandler) {
-										// No route handler found in the specific request
-										// Use fallback route error handler
+							if(route.errorHandler) {
+								// A route handler thrown an Error in the specific request
+								// Use their error handler.
+								Promise.resolve(route.errorHandler(error))
+									.then(response => {
+										this.sendNativeResponse(
+											nativeRequest.requestID,
+											response,
+										)
+									})
+									.catch(e2 => {
+										// The error handler in specific request throw an Error again
+										// Use the fallback error handler
 										Promise.resolve(
-											this.routeErrorHandler(error),
+											this.routeErrorHandler?.(
+												e2 instanceof Error
+													? e2
+													: new ServerError({
+														code: ServerErrorCode.UNKNOWN,
+														message: "Unknown error",
+													}),
+											),
 										)
 											.then(response => {
-												this.sendNativeResponse(
-													nativeRequest.requestID,
-													response,
-												)
+												if(response) {
+													this.sendNativeResponse(
+														nativeRequest.requestID,
+														response,
+													)
+												} else {
+													throw new Error()
+												}
 											})
-											.catch(e2 => {
+											.catch(e3 => {
 												// The fallback error handler throw an Error again
 												// Use default error response
 												this.defaultErrorResponseHandler(
@@ -231,15 +199,28 @@ export class Server implements ServerRouteInterface {
 														status: 500,
 														error: {
 															code: "ECHO_UNHANDLED_ERROR",
-															message: e2 instanceof Error
-																? e2.message || "Internal server error"
+															message: e3 instanceof Error
+																? e3.message || "Internal server error"
 																: "Internal server error",
 														},
 													},
 												)
 											})
-									} else {
-										// No fallback route error handler found
+									})
+							} else if(this.routeErrorHandler) {
+								// No route handler found in the specific request
+								// Use fallback route error handler
+								Promise.resolve(
+									this.routeErrorHandler(error),
+								)
+									.then(response => {
+										this.sendNativeResponse(
+											nativeRequest.requestID,
+											response,
+										)
+									})
+									.catch(e2 => {
+										// The fallback error handler throw an Error again
 										// Use default error response
 										this.defaultErrorResponseHandler(
 											nativeRequest.requestID,
@@ -247,99 +228,117 @@ export class Server implements ServerRouteInterface {
 												status: 500,
 												error: {
 													code: "ECHO_UNHANDLED_ERROR",
-													message: error.message || "Internal server error",
+													message: e2 instanceof Error
+														? e2.message || "Internal server error"
+														: "Internal server error",
 												},
 											},
 										)
-									}
-								})
-						} else if(this.routeErrorHandler) {
-							// Specific route was not found
-							// Send an 404 error
-
-							Promise.resolve(
-								this.routeErrorHandler(
-									new RouteError({
-										code: RouteErrorCode.FOUR_O_FOUR,
-										message: "Unspecified route",
-									}),
-								),
-							)
-								.then(response => {
-									this.sendNativeResponse(
-										nativeRequest.requestID,
-										response,
-									)
-								})
-								.catch(e1 => {
-									// The .routeError was thrown an Error again
-									// Use react-native-echo default response
-
-									// If you are a react-native-echo user,
-									// please do not throw an error again
-									// You can use try..catch in your .routeError
-									// and returns your proper Echo.Http.Response
-
-									this.defaultErrorResponseHandler(
-										nativeRequest.requestID,
-										{
-											status: 500,
-											error: {
-												code: "ECHO_UNHANDLED_ERROR",
-												message: e1 instanceof Error
-													? e1.message || "Internal server error"
-													: "Internal server error",
-											},
+									})
+							} else {
+								// No fallback route error handler found
+								// Use default error response
+								this.defaultErrorResponseHandler(
+									nativeRequest.requestID,
+									{
+										status: 500,
+										error: {
+											code: "ECHO_UNHANDLED_ERROR",
+											message: error.message || "Internal server error",
 										},
-									)
-								})
-						} else {
-							// Specific route was not found
+									},
+								)
+							}
+						})
+				} else if(this.routeErrorHandler) {
+					// Specific route was not found
+					// Send an 404 error
+
+					Promise.resolve(
+						this.routeErrorHandler(
+							new RouteError({
+								code: RouteErrorCode.FOUR_O_FOUR,
+								message: "Unspecified route",
+							}),
+						),
+					)
+						.then(response => {
 							this.sendNativeResponse(
 								nativeRequest.requestID,
-								new Response(null, { status: 404 }),
+								response,
 							)
-						}
+						})
+						.catch(e1 => {
+							// The .routeError was thrown an Error again
+							// Use react-native-echo default response
 
-					} else if(typeof nativeRequest.requestID == "string") {
-						// DON'T CALM.
-						// PLEASE BE PANIC!
+							// If you are a react-native-echo user,
+							// please do not throw an error again
+							// You can use try..catch in your .routeError
+							// and returns your proper Echo.Http.Response
 
-						const error = {
-							code: "ECHO_PANIC_INVALID_NATIVE_REQUEST",
-							message: "Something went wrong in react-native-echo",
-						}
-
-						const metadata = {
-							version: Const.Echo.VERSION,
-							platform: {
-								os: Platform.OS,
-								version: Platform.Version,
-								react_native_version: Platform.constants.reactNativeVersion,
-							},
-						}
-
-						this.defaultErrorResponseHandler(
-							nativeRequest.requestID,
-							{
-								status: 500,
-								error,
-								metadata,
-							},
-						)
-
-						if(__DEV__) {
-							console.error(
-								`${error.code} :: ${error.message}`,
-								metadata,
+							this.defaultErrorResponseHandler(
+								nativeRequest.requestID,
+								{
+									status: 500,
+									error: {
+										code: "ECHO_UNHANDLED_ERROR",
+										message: e1 instanceof Error
+											? e1.message || "Internal server error"
+											: "Internal server error",
+									},
+								},
 							)
-						}
-					} else {
-						// PANIC!
-						// WE CAN'T WRITE A RESPONSE TO UNKNOWN REQUEST
-						this.close()
-					}
-				})
+						})
+				} else {
+					// Specific route was not found
+					this.sendNativeResponse(
+						nativeRequest.requestID,
+						new Response(null, { status: 404 }),
+					)
+				}
+
+			} else {
+				// DON'T CALM.
+				// PLEASE BE PANIC!
+
+				const error = {
+					code: "ECHO_PANIC_INVALID_NATIVE_REQUEST",
+					message: "Something went wrong in react-native-echo",
+				}
+
+				const metadata = {
+					version: Const.Echo.VERSION,
+					platform: {
+						os: Platform.OS,
+						version: Platform.Version,
+						react_native_version: Platform.constants.reactNativeVersion,
+					},
+				}
+
+				if(typeof nativeRequest.requestID == "string") {
+					this.defaultErrorResponseHandler(
+						nativeRequest.requestID,
+						{
+							status: 500,
+							error,
+							metadata,
+						},
+					)
+				} else {
+					// PANIC!
+					// WE CAN'T WRITE A RESPONSE TO UNKNOWN REQUEST
+					this.close()
+				}
+
+				if(__DEV__) {
+					console.error(
+						`${error.code} :: ${error.message}`,
+						metadata,
+					)
+				}
+			}
+		})
 	}
 
 	private sendNativeResponse(
@@ -458,6 +457,7 @@ export class Server implements ServerRouteInterface {
 			this.registeredRouteWithMethod = {}
 
 			this.registeredServerEvent.on_close?.()
+			this.registeredServerEvent = {}
 		}
 	}
 
