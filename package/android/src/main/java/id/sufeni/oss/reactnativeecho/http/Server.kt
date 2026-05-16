@@ -70,7 +70,7 @@ class Server(
     // to prevent this method is getting invoked more than once
 
     server = embeddedServer(
-      Netty,
+      factory = Netty,
       port = port.toInt(),
     ) {
 
