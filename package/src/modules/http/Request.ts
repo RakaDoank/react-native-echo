@@ -69,7 +69,9 @@ export interface Request {
 
 	text(): Promise<string>,
 
-	// TODO : Provide a clone method to clone the request formData, json, and text in native side
+	// TODO
+	// I don't know the best way to provide clone method
+	// to clone the request formData, json, and text in native side
 	// clone()
 
 }
