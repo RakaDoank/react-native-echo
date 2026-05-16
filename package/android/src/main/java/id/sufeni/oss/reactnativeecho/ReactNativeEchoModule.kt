@@ -32,39 +32,12 @@ class ReactNativeEchoModule(
       jsRequestObject.putString("serverID", serverID)
       jsRequestObject.putString("requestID", requestID)
 
-      // ++++ Headers +++++
-      val headers = Arguments.createMap()
-      request.headers.forEach { key, _ ->
-        request.headers[key]?.let {
-          headers.putString(key, it)
-        }
-      }
-      jsRequestObject.putMap("headers", headers)
-      // ----- Headers -----
-
-      // +++++ Method +++++
+      jsRequestObject.putMap("headers", request.headers)
       jsRequestObject.putString("method", request.method)
-      // ----- Method
-
-      // +++++ Origin +++++
-      val origin = Arguments.createMap()
-      origin.putString("host", request.origin.host)
-      origin.putString("port", request.origin.port)
-      origin.putString("protocol", request.origin.protocol)
-      jsRequestObject.putMap("origin", origin)
-      // ----- Origin -----
-
-      // +++++ Url +++++
-      val url = Arguments.createMap()
-      url.putString("pathname", request.url.pathname)
-      url.putString("search", request.url.search)
-      jsRequestObject.putMap("url", url)
-      // ----- Url -----
-
-      // +++++ Referrer & Referrer-Policy +++++
+      jsRequestObject.putMap("origin", request.origin)
+      jsRequestObject.putMap("url", request.url)
       jsRequestObject.putString("referrer", request.referrer)
       jsRequestObject.putString("referrerPolicy", request.referrerPolicy)
-      // ----- Referrer & Referrer-Policy -----
 
       emitHttpRequestListener(jsRequestObject)
     }

@@ -39,34 +39,42 @@ class Request(
   private val partFileItems =
       mutableMapOf<String, File>()
 
-  val headers = call.request.headers
+  val headers by lazy {
+    val map = Arguments.createMap()
+    call.request.headers.forEach { key, _ ->
+      call.request.headers[key]?.let {
+        map.putString(key, it)
+      }
+    }
+    map
+  }
 
-  val method = call.request.httpMethod.value
+  val method by lazy {
+    call.request.httpMethod.value
+  }
 
-  val origin = Origin(
-    host = call.request.origin.remoteHost,
-    port = call.request.origin.remotePort.toString(),
-    protocol = "${call.request.origin.scheme}:", // trailing colon similar as the Web API of URL.protocol
-  )
+  val origin by lazy {
+    val map = Arguments.createMap()
+    map.putString("host", call.request.origin.remoteHost)
+    map.putString("port", call.request.origin.remotePort.toString())
+    map.putString("protocol", "${call.request.origin.scheme}:") // trailing colon similar as the Web API of URL.protocol
+    map
+  }
 
-  val url = Url(
-    pathname = call.request.path(),
-    search = call.request.queryString(),
-  )
+  val url by lazy {
+    val map = Arguments.createMap()
+    map.putString("pathname", call.request.path())
+    map.putString("search", call.request.queryString())
+    map
+  }
 
-  val referrer = headers[HttpHeaders.Referrer] ?: ""
-  val referrerPolicy = headers["referrer-policy"] ?: ""
+  val referrer by lazy {
+    call.request.headers[HttpHeaders.Referrer] ?: ""
+  }
 
-  data class Origin (
-    val host: String,
-    val port: String,
-    val protocol: String, // "https:"
-  )
-
-  data class Url (
-    val pathname: String,
-    val search: String,
-  )
+  val referrerPolicy by lazy {
+    call.request.headers["referrer-policy"] ?: ""
+  }
 
   suspend fun formData(): ReadableMap? {
     try {
@@ -132,14 +140,12 @@ class Request(
    * Call this method to clear some references that needs to be removed or cleared.
    * For instance, removing the cached multipart file if any.
    */
-  suspend fun dispose() {
-    withContext(Dispatchers.IO) {
-      partFileItems.entries.forEach {
-        try {
-          it.value.delete()
-        } catch(_: IOException) {
-          // nothing
-        }
+  suspend fun dispose() = withContext(Dispatchers.IO) {
+    partFileItems.entries.forEach {
+      try {
+        it.value.delete()
+      } catch(_: IOException) {
+        // nothing
       }
     }
   }
