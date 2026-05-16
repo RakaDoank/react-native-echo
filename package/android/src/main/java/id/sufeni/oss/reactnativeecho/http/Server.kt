@@ -7,6 +7,7 @@ import id.sufeni.oss.reactnativeecho.helpers.throttleLatest
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.EngineConnectorBuilder
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
@@ -17,7 +18,6 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -43,21 +43,18 @@ class Server(
   /**
    * Dispose the Request with a throttle.
    */
-  private val routeRequestDisposer: (Unit) -> Unit =
+  private val routeRequestDisposer: suspend (Unit) -> Unit =
     throttleLatest(
-      250L,
-      CoroutineScope(Dispatchers.Default),
+      750L,
     ) {
       val iterator = routeRequestsStale.iterator()
-      CoroutineScope(Dispatchers.IO).launch {
-        while(iterator.hasNext()) {
-          val requestID = iterator.next()
-          routeRequests[requestID]?.let {
-            it.dispose()
-            routeRequests.remove(requestID)
-          }
-          iterator.remove()
+      while(iterator.hasNext()) {
+        val requestID = iterator.next()
+        routeRequests[requestID]?.let {
+          it.dispose()
+          routeRequests.remove(requestID)
         }
+        iterator.remove()
       }
     }
 
@@ -71,7 +68,13 @@ class Server(
 
     server = embeddedServer(
       factory = Netty,
-      port = port.toInt(),
+      configure = {
+        connectors.add(EngineConnectorBuilder().apply {
+          host = "0.0.0.0"
+          this.port = port.toInt()
+        })
+        tcpKeepAlive = true
+      }
     ) {
 
       install(ForwardedHeaders)
