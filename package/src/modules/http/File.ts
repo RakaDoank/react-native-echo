@@ -13,7 +13,8 @@ import type {
  * to the device storage, or send to an another remote server.
  * 
  * Probably in the future, this library will use the JSI to bounce
- * the array buffer from and to native and JavaScript.
+ * the array buffer from and to native and JavaScript to create File instance,
+ * or will use C++ http server library directly.
  */
 export class File {
 

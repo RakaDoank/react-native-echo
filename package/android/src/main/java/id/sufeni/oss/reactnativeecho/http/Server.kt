@@ -2,6 +2,8 @@ package id.sufeni.oss.reactnativeecho.http
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
+import id.sufeni.oss.reactnativeecho.helpers.randomString
+import id.sufeni.oss.reactnativeecho.helpers.throttleLatest
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
@@ -15,6 +17,7 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -28,18 +31,35 @@ class Server(
   private val routeRequests =
     mutableMapOf<RequestID, Request>()
 
+  private val routeRequestsStale =
+    mutableListOf<RequestID>()
+
   private val deferredResponses =
     mutableMapOf<RequestID, CompletableDeferred<ReadableMap?>>()
 
   private var server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? =
     null
 
-  private fun generateRandomRequestID(): String {
-    val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-    return (1..16)
-      .map { allowedChars.random() }
-      .joinToString("")
-  }
+  /**
+   * Dispose the Request with a throttle.
+   */
+  private val routeRequestDisposer: (Unit) -> Unit =
+    throttleLatest(
+      250L,
+      CoroutineScope(Dispatchers.Default),
+    ) {
+      val iterator = routeRequestsStale.iterator()
+      CoroutineScope(Dispatchers.IO).launch {
+        while(iterator.hasNext()) {
+          val requestID = iterator.next()
+          routeRequests[requestID]?.let {
+            it.dispose()
+            routeRequests.remove(requestID)
+          }
+          iterator.remove()
+        }
+      }
+    }
 
   fun listen(
     port: UShort,
@@ -59,7 +79,8 @@ class Server(
       routing {
         route("/{...}") {
           handle {
-            val requestID = generateRandomRequestID()
+            val requestID = randomString(16)
+
             val routeRequest = Request(
               call = call,
               reactApplicationContext = reactApplicationContext,
@@ -83,11 +104,6 @@ class Server(
 
             deferredResponseCodegenObject.await()
             deferredResponses.remove(requestID)
-
-            // +++++ Clear the `RouteRequest` +++++
-            routeRequest.dispose()
-            routeRequests.remove(requestID)
-            // ----- Clear the `RouteRequest`
 
             if(responseCodegenObject == null) {
               call.respond(HttpStatusCode.NoContent)
@@ -135,6 +151,11 @@ class Server(
                 call.respond(HttpStatusCode.NoContent)
               }
             }
+
+            // +++++ Clear the `RouteRequest` +++++
+            routeRequestsStale.add(requestID)
+            routeRequestDisposer(Unit)
+            // ----- Clear the `RouteRequest`
           }
         }
       } // routing

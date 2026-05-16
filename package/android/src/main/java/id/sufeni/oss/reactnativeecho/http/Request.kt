@@ -130,7 +130,7 @@ class Request(
 
   /**
    * Call this method to clear some references that needs to be removed or cleared.
-   * For instance, removing the cached multipart file.
+   * For instance, removing the cached multipart file if any.
    */
   suspend fun dispose() {
     withContext(Dispatchers.IO) {

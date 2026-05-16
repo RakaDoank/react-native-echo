@@ -122,8 +122,6 @@ export class Server implements ServerRouteInterface {
 							this.registeredRoute[nativeRequest.url?.pathname || ""] ??
 							this.registeredRouteWithMethod[nativeRequest.url?.pathname || ""]?.[nativeRequest.method]
 
-						console.log("route ", route)
-
 						if(route?.handler) {
 							Promise.resolve(
 								route.handler(
