@@ -1,6 +1,6 @@
-import type {
-	CodegenTypes,
-} from "react-native"
+import {
+	NativeFileSymbol,
+} from "./_native-file-symbol"
 
 /**
  * This instance is a reimplementation of `File` from Web API standard.
@@ -47,38 +47,12 @@ export class File {
 	 */
 	readonly uri: string = ""
 
-	constructor(
-		init: CodegenTypes.UnsafeObject,
-	) {
-		const data = init as Record<string, unknown>
+	constructor() {
+		throw new TypeError("Cannot construct File instances directly");
+	}
 
-		if(
-			data &&
-			typeof data == "object" &&
-			typeof data.uri == "string"
-		) {
-
-			if(typeof data.name == "string") {
-				this.name = data.name
-			}
-
-			if(typeof data.originalName == "string") {
-				this.originalName = data.originalName
-			}
-
-			if(typeof data.size == "number") {
-				this.size = data.size
-			}
-
-			if(typeof data.type == "string") {
-				this.type = data.type
-			}
-
-			if(typeof data.uri == "string") {
-				this.uri = data.uri
-			}
-
-		}
+	static [Symbol.hasInstance](value: unknown) {
+		return !!(value as Record<string, unknown> | null)?.[NativeFileSymbol]
 	}
 
 }

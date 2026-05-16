@@ -2,7 +2,7 @@ import NativeReactNativeEcho, {
 	type Spec,
 } from "../../_internal/native-modules/NativeReactNativeEcho"
 
-import {
+import type {
 	File,
 } from "./File"
 
@@ -13,6 +13,10 @@ import {
 import type {
 	Request,
 } from "./Request"
+
+import {
+	NativeFile,
+} from "./_NativeFile"
 
 export class NativeRequest implements Request {
 
@@ -79,7 +83,7 @@ export class NativeRequest implements Request {
 							) {
 								formData.append(
 									key,
-									new File(value),
+									new NativeFile(value),
 								)
 							}
 						})

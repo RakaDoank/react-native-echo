@@ -2,10 +2,29 @@ import {
 	File,
 } from "./File"
 
+import {
+	NativeFile,
+} from "./_NativeFile"
+
 /**
  * This class is a reimplementation of `FormData` from Web API to support the reimplemented `File` for the route request.
  * 
  * Due to the reimplementation, `FormData` is not support to store a `Blob` from the Web API standard.
+ * 
+ * To check if an entry is a file, you can simply check with `instanceof` operator test
+ * @example
+ * ```ts
+ * import * as Echo from "react-native-echo"
+ * 
+ * server.post("/api/bar", request => {
+ * 	const formData = await request.formData()
+ * 	const file = formData.get("file_foo")
+ * 
+ * 	if(file instanceof Echo.Http.File) {
+ * 		// your code
+ * 	}
+ * })
+ * ```
  */
 export class FormData {
 
@@ -69,7 +88,7 @@ export class FormData {
 				this.record[name] = [value]
 			} else if(value instanceof File) {
 				this.record[name] = [
-					new File({
+					new NativeFile({
 						...value,
 						name: filename ?? value.name,
 					}),
