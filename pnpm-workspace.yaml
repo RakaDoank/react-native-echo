@@ -15,3 +15,4 @@ nodeLinker: hoisted
 packages:
   - 'example'
   - 'package'
+  - 'package-builder'

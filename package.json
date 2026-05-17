@@ -3,6 +3,12 @@
 	"private": true,
 	"version": "0.0.0",
 	"description": "Embed a HTTP server to your React Native app",
+	"scripts": {
+		"code-check": "npm run type-check && npm run lint",
+		"lint": "eslint .",
+		"package-builder": "package-builder",
+		"type-check": "tsc --build"	
+	},
 	"devDependencies": {
 		"@eslint/compat": "2.1.0",
 		"@react-native/eslint-config": "0.83.6",
@@ -19,7 +25,7 @@
 		"eslint-plugin-react-hooks": "7.1.1",
 		"eslint-plugin-react-native": "^5.0.0",
 		"globals": "17.6.0",
-		"semver": "7.8.0",
+		"package-builder": "workspace:*",
 		"typescript": "6.0.3",
 		"typescript-eslint": "8.59.2"
 	},
