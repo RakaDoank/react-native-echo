@@ -13,7 +13,7 @@ See this [example](https://github.com/RakaDoank/react-native-echo/blob/main/exam
 - Simple library APIs and reimplementation to the [Web APIs](https://developer.mozilla.org/en-US/docs/Web/API) as similar as possible
 - Route handling in event loop per thread for better handling to a lot of request
 
-#### In development
+#### Pending
 - Static file and/or directory serving
 - WebSocket support for real time bidirectional communication
 - HTTP server for iOS & macOS support. Possibly with [Swift NIO Transport Services](https://github.com/apple/swift-nio-transport-services)
