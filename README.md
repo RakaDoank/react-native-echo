@@ -30,5 +30,5 @@ I did a simple Postman runner performance test, with 20 Virtual Users run an API
 | POST /api/json          | Sent a JSON in the body, and give the JSON back to the response (with JSON.parse from RN side)                  | 1053           | 15.75           | 208                     | 10                     | 6914                   | 192         | 290        | 6715        | 1 (ECONRESET)    |
 > The `/api/json` avg and max time is high because of the one error. It's actually doing good as the `/api/hello/world`.
 
-I also plan to use [uWebSockets](https://github.com/uNetworking/uWebSockets) server in Android to make the JavaScript side communicate back and forth with C++ through JSI,
+I also plan to use [uWebSockets](https://github.com/uNetworking/uWebSockets) server in Android to make the JavaScript side communicate back and forth with C++ through JSI with a little overhead,
 and probably with [NitroModules](https://github.com/mrousavy/nitro), if they can perform better than the current implementation with Ktor+Netty server with React Native Turbo Module.
