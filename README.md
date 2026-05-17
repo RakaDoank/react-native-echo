@@ -21,7 +21,7 @@ I'm still in research to make this library performs better in high-volume and hi
 
 This library is using [Ktor](https://github.com/ktorio/ktor) server with [Netty](https://github.com/netty/netty) in Android. `react-native-echo` is currently doing **good relatively** with the Ktor + Netty server library with really minimal error, and the `multipart/form-data` request handling is still performing good with cached files, but the performance in a Android device is becoming a question from myself, is this good or not.
 
-I did a simple Postman runner performance test, with 20 Virtual Users run an API in parallel and repeatedly for 1 minute. I did the test with a Realme GT Master (Snapdragon 778G 5G, 8GB RAM. It doesn't mean the library use all the power of the device, because we are limited in a Android app)
+I did a simple Postman runner performance test, with 20 Virtual Users run an API in parallel and repeatedly for 1 minute. I did the test with a Realme GT Master (Snapdragon 778G, 8GB RAM. It doesn't mean the library use all the power of the device, because we are limited in an Android app)
 
 | Route                   | Description                                                                                                     | Total Requests | Requests/second | Avg. response time (ms) | Min response time (ms) | Max response time (ms) | P90 (ms)    | P95 (ms)   | P99 (ms)    | Error            |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------- | -------------- | --------------- | ----------------------- | ---------------------- | ---------------------- | ----------- | ---------- | ----------- | ---------------- |
