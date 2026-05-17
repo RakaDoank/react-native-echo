@@ -6,6 +6,12 @@
 	"author": "RakaDoank <rakaaudira@gmail.com> (https://github.com/RakaDoank)",
 	"homepage": "https://github.com/RakaDoank/react-native-echo",
 	"repository": "https://github.com/RakaDoank/react-native-echo",
+	"keywords": [
+		"react-native-echo",
+		"react-native-http-server",
+		"http-server",
+		"android-http-server"
+	],
 	"files": [
 		"android",
 		"apple",
