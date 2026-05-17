@@ -1,1 +1,3 @@
-export const VERSION = "0.0.1-beta.1" // placeholder. It will be replaced on publishing automatically
+// A placeholder. It will be replaced on publishing automatically.
+// Please do not commit this change 
+export const VERSION = "X.X.X"
