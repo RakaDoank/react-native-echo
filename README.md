@@ -9,7 +9,7 @@ A library to embed a HTTP server in a React Native app with thread safety to han
 - Built-in support for `JSON` thanks to the nature of JavaScript
 - Memory optimized for `multipart/form-data` request handling support with its cached file instead of holding an array buffer
 - Simple library APIs and reimplementation to the [Web APIs](https://developer.mozilla.org/en-US/docs/Web/API) as similar as possible
-- Route handling in event loop per thread, instead of per process for better handling to a lot of request
+- Route handling in event loop per thread for better handling to a lot of request
 
 #### In development
 - Static file and/or directory serving
