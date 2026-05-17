@@ -134,7 +134,7 @@ class Server(
 
               if(bodyType == "text") {
                 val bodyText = responseCodegenObject!!.getString("body")
-                if(bodyText != null) {
+                if(!bodyText.isNullOrEmpty()) {
                   call.respondText(bodyText)
                 } else {
                   call.respond(
