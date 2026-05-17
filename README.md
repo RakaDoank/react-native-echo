@@ -4,6 +4,8 @@ A library to embed a HTTP server in a React Native app with thread safety to han
 
 > ⚠️ The library is still in development and research. I'm still playing around with this library. Read [in research](#in-research)
 
+See this [example](https://github.com/RakaDoank/react-native-echo/blob/main/example/src/app/index.tsx) of how to use this library.
+
 ## Features
 
 - Built-in support for `JSON` thanks to the nature of JavaScript

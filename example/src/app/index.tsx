@@ -165,7 +165,7 @@ export default function Page() {
 					carbonStyleSheet.text,
 				] }
 			>
-				Hit the server
+				Hit the server from your PC to the Android Emulator (through ADB port forwarding) or to an Android device IP in the same network.
 			</Text>
 		</View>
 	)
