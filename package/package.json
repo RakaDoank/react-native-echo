@@ -2,6 +2,10 @@
 	"name": "react-native-echo",
 	"version": "0.0.1-beta.1",
 	"description": "Embed a server of HTTP in React Native app",
+	"license": "MIT",
+	"author": "RakaDoank <rakaaudira@gmail.com> (https://github.com/RakaDoank)",
+	"homepage": "https://github.com/RakaDoank/react-native-echo",
+	"repository": "https://github.com/RakaDoank/react-native-echo",
 	"files": [
 		"android",
 		"apple",
