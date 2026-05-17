@@ -102,6 +102,45 @@ export default function Page() {
 			},
 		)
 
+		server.put(
+			"/api/put",
+			async request => {
+				try {
+					const headersObj: Record<string, string> = {}
+					request.headers.forEach((value, key) => {
+						headersObj[key] = value
+					})
+
+					return Echo.Http.Response.json({
+						put: true,
+						headers: headersObj,
+						data: await request.json() as unknown,
+					})
+				} catch(err) {
+					return Echo.Http.Response.json(
+						{
+							yeay: false,
+							error: err instanceof Error ? {
+								message: err.message,
+							} : undefined,
+						},
+					)
+				}
+			},
+		)
+
+		server.delete(
+			"/api/delete",
+			() => {
+				return new Echo.Http.Response(
+					null,
+					{
+						status: 204,
+					},
+				)
+			},
+		)
+
 		server.listen(
 			4040,
 			function() {
