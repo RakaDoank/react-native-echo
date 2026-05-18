@@ -34,3 +34,4 @@ I did a simple Postman runner performance test, with 20 Virtual Users run an API
 
 I also plan to use [uWebSockets](https://github.com/uNetworking/uWebSockets) server in Android to make the JavaScript side communicate back and forth with C++ through JSI with a little overhead,
 and probably with [NitroModules](https://github.com/mrousavy/nitro), if they can perform better than the current implementation with Ktor+Netty server with React Native Turbo Module.
+> Currently in working. See the "jsi" branch of this repository.
