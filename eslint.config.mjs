@@ -376,6 +376,7 @@ export default EslintConfig.defineConfig([
 		files: [
 			"./example/*.config.js",
 			"./scripts/**/*.{js,mjs}",
+			"./package/react-native.config.js",
 			"./package-builder/**/*.{js,mjs}",
 		],
 		languageOptions: {

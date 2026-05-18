@@ -51,6 +51,18 @@ android {
     // https://issuetracker.google.com/issues/230625468?pli=1
     // It is not useful for libraries to declare a targetSdkVersion and soon the manifest merger will ignore it.
     // targetSdk = getExtOrDefault("targetSdkVersion") as Int
+
+    externalNativeBuild {
+      cmake {
+        arguments += listOf("-DANDROID_STL=c++_shared")
+      }
+    }
+  }
+
+  externalNativeBuild {
+    cmake {
+      path("CMakeLists.txt")
+    }
   }
 
   packaging {
@@ -61,6 +73,8 @@ android {
 
   buildFeatures {
     buildConfig = true
+    prefab = true
+    prefabPublishing = true
   }
 
   buildTypes {
