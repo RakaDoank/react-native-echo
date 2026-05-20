@@ -1,8 +1,13 @@
-//
-// Created by MyRepublic on 19/05/26.
-//
+#pragma once
 
-#ifndef ECHO_EXAMPLE_REACTNATIVEECHO_H
-#define ECHO_EXAMPLE_REACTNATIVEECHO_H
+#include <ReactCommon/CallInvoker.h>
+#include <jsi/jsi.h>
+#include <jsi/jsilib.h>
 
-#endif //ECHO_EXAMPLE_REACTNATIVEECHO_H
+namespace react_native_echo {
+
+void install(facebook::jsi::Runtime& rt,
+             const std::shared_ptr<facebook::react::CallInvoker>& invoker,
+             );
+
+} // namespace reactnativeecho
