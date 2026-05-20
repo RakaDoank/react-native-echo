@@ -1,0 +1,8 @@
+//
+// Created by MyRepublic on 19/05/26.
+//
+
+#ifndef ECHO_EXAMPLE_REACTNATIVEECHO_H
+#define ECHO_EXAMPLE_REACTNATIVEECHO_H
+
+#endif //ECHO_EXAMPLE_REACTNATIVEECHO_H
