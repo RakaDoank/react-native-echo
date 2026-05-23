@@ -3,6 +3,7 @@ package id.sufeni.oss.reactnativeecho
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableMap
 import id.sufeni.oss.reactnativeecho.http.Server
 import id.sufeni.oss.reactnativeecho.http.ServerOptions
@@ -13,6 +14,21 @@ class ReactNativeEchoModule(
 
   private val httpServers =
     mutableMapOf<String, Server>()
+
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  override fun install(): Boolean {
+    return try {
+      ReactNativeEchoJni.install(reactApplicationContext)
+      true
+    } catch (exception: Exception) {
+      false
+    }
+  }
+
+  override fun invalidate() {
+    super.invalidate()
+    ReactNativeEchoJni.invalidate()
+  }
 
   override fun httpCreateServer(
     serverID: String,
@@ -115,6 +131,9 @@ class ReactNativeEchoModule(
   }
 
   companion object {
+    init {
+      System.loadLibrary("react-native-echo") // the CMake ${PACKAGE_NAME}
+    }
     const val NAME = NativeReactNativeEchoSpec.NAME
   }
 

@@ -6,6 +6,11 @@ import {
 
 export interface Spec extends TurboModule {
 
+	/**
+	 * Install the C++ methods to the JavaScript global instance
+	 */
+	install: () => boolean,
+
 	// +++++ HTTP +++++
 	httpCreateServer: (
 		serverID: string,

@@ -11,15 +11,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
 
-file(GLOB_RECURSE cpp_shared_files RELATIVE ${CMAKE_SOURCE_DIR} "../cpp/*.cpp")
+file(
+	GLOB_RECURSE
+	cpp_shared_files
+	RELATIVE
+	${CMAKE_SOURCE_DIR}
+	"../cpp/*.cpp"
+	"../cpp/http/*.cpp"
+)
 # It's useful to include JNI
-# file(GLOB_RECURSE cpp_android_files RELATIVE ${CMAKE_SOURCE_DIR} "src/main/cpp/**/*.cpp")
+file(GLOB_RECURSE cpp_android_files RELATIVE ${CMAKE_SOURCE_DIR} "src/main/cpp/*.cpp")
 
 add_library(
 	${PACKAGE_NAME}
 	SHARED
 	${cpp_shared_files}
-	# ${cpp_android_files}
+	${cpp_android_files}
 )
 target_include_directories(
 	${PACKAGE_NAME}
@@ -109,4 +116,5 @@ target_link_libraries(
 	fbjni::fbjni
 	uWebSockets
 	android
+	log
 )
