@@ -93,7 +93,7 @@ void install(facebook::jsi::Runtime &rt,
   /**
    * ```js
    * function() {
-   *   JsiReactNativeEcho.httpServerRoute(
+   *   ReactNativeEchoJsi.httpServerRoute(
    *    "someID",
    *    "/api/foo/bar",
    *    (request) => {

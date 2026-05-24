@@ -51,6 +51,12 @@ export namespace ReactNativeEchoJsi {
 			serverID: string,
 		) => void,
 
+		// httpServerRouteOnRequest: (
+		// 	serverID: string,
+		// 	requestID: string,
+		// 	request: Request,
+		// ) => void,
+
 		httpServerRoute: (
 			serverID: string,
 			path: string,
@@ -77,6 +83,8 @@ export namespace ReactNativeEchoJsi {
 	export const httpServerClose = global.__react_native_echo!.httpServerClose
 
 	export const httpServerRoute = global.__react_native_echo!.httpServerRoute
+
+	// export const httpServerRouteOnRequest = global.__react_native_echo!.httpServerRouteOnRequest
 
 	export const httpServerRouteWriteResponse = global.__react_native_echo!.httpServerRouteWriteResponse
 

@@ -5,15 +5,28 @@
 
 namespace react_native_echo {
 
-class JSI_EXPORT RequestJsObject : public facebook::jsi::HostObject {
+class JSI_EXPORT RequestHostObject : public facebook::jsi::HostObject {
 
 private:
   uWS::HttpRequest *httpRequest;
 
-public:
-  RequestJsObject(uWS::HttpRequest *req) : httpRequest(req) {};
+  std::vector<std::string> keys = {"id",      // represent as the request-id
+                                   "headers", // obviously headers object
+                                   "method",  // GET, POST, or else
+                                   "url"
+  };
+
+
+
+  facebook::jsi::Object headers(facebook::jsi::Runtime &rt);
+
+  facebook::jsi::String method(facebook::jsi::Runtime &rt);
+
+  facebook::jsi::Object url(facebook::jsi::Runtime &rt);
 
 public:
+  RequestHostObject(uWS::HttpRequest *req) : httpRequest(req) {};
+
   facebook::jsi::Value get(facebook::jsi::Runtime &rt,
                            const facebook::jsi::PropNameID &propNameID) override;
 

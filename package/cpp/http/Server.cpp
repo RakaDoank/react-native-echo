@@ -1,43 +1,12 @@
 #include "Server.h"
 #include <android/log.h>
 #include <jsi/jsi.h>
+#include <random>
 #include <thread>
-#include "RequestJsObject.h"
 #include "uWebSockets/App.h"
 #include "uWebSockets/HttpResponse.h"
 
-namespace {
-
-/**
- * This is temporary app setup.
- * The value will be moved to the worker thread (std::move) after user call the `listen` method.
- * It's should've been guarded from the JS to prevent call the listen method of the JSI.
- */
-uWS::TemplatedApp<false> *app = new uWS::App;
-
-std::thread serverThread;
-
-us_listen_socket_t *listenSocket = nullptr;
-std::mutex listenSocketMutex;
-
-uWS::Loop *serverLoop = nullptr;
-
-}
-
 namespace react_native_echo {
-
-ServerOptions ServerOptions::fromJsiObject(facebook::jsi::Runtime &rt,
-                                           facebook::jsi::Object &&object) {
-  auto timeout = object.getProperty(rt, "routeHandlerTimeout");
-
-  ServerOptions options = {180000};
-
-  if(timeout.isNumber()) {
-   options.routeHandlerTimeout = static_cast<u_long>(timeout.asNumber());
-  }
-
-  return options;
-}
 
 Server::~Server() {
   this->close();
@@ -47,60 +16,75 @@ Server::~Server() {
 // Seharusnya event loop di thread pasang route yang mengambil semua pattern
 // Sama seperti di implementasi sebelumnya di Ktor
 // Gak bisa chaining method si "App" yang tadi
-void Server::route(facebook::jsi::Runtime &rt,
-                   std::string &&path,
-                   std::function<void (const facebook::jsi::Object requestObject)> callback) {
-  auto nApp = app->any(std::move(path), [&rt, &callback](auto *res, auto *req) {
-    __android_log_print(ANDROID_LOG_INFO, "echoserver", "route call");
-    RequestJsObject requestJsObject(req);
-    facebook::jsi::Object requestObject = facebook::jsi::Object::createFromHostObject(rt,
-                                                                                      std::make_shared<RequestJsObject>(std::move(requestJsObject)));
+//void Server::route(facebook::jsi::Runtime &rt,
+//                   std::string &&path,
+//                   std::function<void (const facebook::jsi::Object requestObject)> callback) {
+//  auto nApp = app->any(std::move(path), [&rt, &callback](auto *res, auto *req) {
+//    __android_log_print(ANDROID_LOG_INFO, "echoserver", "route call");
+//    RequestJsObject requestJsObject(req);
+//    facebook::jsi::Object requestObject = facebook::jsi::Object::createFromHostObject(rt,
+//                                                                                      std::make_shared<RequestJsObject>(std::move(requestJsObject)));
+//
+//
+//    callback(std::move(requestObject));
+//
+//    // for a test response
+//    res->end("Hello World");
+//  });
+//
+//  app = &nApp;
+//}
 
+void Server::listen(int &&port,
+                    std::function<void ()> &listenerCallback) {
+  std::function<void (int &wPort, std::function<void ()> &wListenerCallback)> serverWorker = [this](auto &wPort, auto &wListenerCallback) {
+    this->serverLoop = uWS::Loop::get();
 
-    callback(std::move(requestObject));
+    uWS::App().any("/*", [this](auto *res, auto *req) {
+      auto pendingRoute = std::make_shared<PendingRoute>(RequestHostObject(req), res);
 
-    // for a test response
-    res->end("Hello World");
-  });
+      res->onAborted([pendingRoute]() {
+        pendingRoute->aborted = true;
+      });
 
-  app = &nApp;
-}
+      std::string requestID;
+      {
+        const std::string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_real_distribution<> dist(0, chars.size() - 1);
 
-void Server::listen(int port,
-                    std::function<void ()> &&listenerCallback) {
-  std::function<void (uWS::TemplatedApp<false> &&wApp, int &wPort, std::function<void ()> wCallback)> workerTest = [](auto wApp, auto wPort, auto wCallback) {
-    serverLoop = uWS::Loop::get();
+        for(int i = 0; i < 16; ++i) {
+          requestID += chars[static_cast<int>(dist(mt))];
+        }
+      }
 
-    wApp.listen(wPort, [&wCallback](auto *listenerSocket) {
-      listenSocket = listenerSocket;
-      wCallback();
+      this->pendingRoutes[requestID] = pendingRoute;
+
+      // callback
     });
-
-    // Run the event loop
-    wApp.run();
   };
 
   // To prevent the UI thread is getting blocked
   // Run the server from another thread
   // https://github.com/uNetworking/uWebSockets/issues/1858#issuecomment-2907728248
-  serverThread = std::thread(std::move(workerTest),
-                     std::move(*app),
+  this->serverThread = std::thread(std::move(serverWorker),
                      std::ref(port),
                      listenerCallback);
 
-  serverThread.join();
+  this->serverThread.join();
 }
 
 void Server::close() {
-  if(serverLoop) {
-    serverLoop->defer([]() {
-      // Close the listening sockets
-      std::lock_guard<std::mutex> lock(listenSocketMutex);
-      if(listenSocket) {
-        us_listen_socket_close(0, listenSocket);
-        listenSocket = nullptr;
-      }
-    });
+  if(this->serverLoop) {
+    this->serverLoop->defer(static_cast<uWS::MoveOnlyFunction<void(void)> &&>([this]() {
+        // Close the listening sockets
+        std::lock_guard<std::mutex> lock(this->listenSocketMutex);
+        if (this->listenSocket) {
+          us_listen_socket_close(0, listenSocket);
+          listenSocket = nullptr;
+        }
+    }));
   }
 
 //  if(serverThread && serverThread->joinable()) {
