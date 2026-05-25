@@ -1,8 +1,10 @@
 #include "Server.h"
-#include <android/log.h>
-#include <jsi/jsi.h>
+#include <optional>
 #include <random>
+#include <string>
+#include <string_view>
 #include <thread>
+#include <utility>
 #include "uWebSockets/App.h"
 #include "uWebSockets/HttpResponse.h"
 
@@ -12,40 +14,16 @@ Server::~Server() {
   this->close();
 }
 
-// Ini gak bisa dilakukan
-// Seharusnya event loop di thread pasang route yang mengambil semua pattern
-// Sama seperti di implementasi sebelumnya di Ktor
-// Gak bisa chaining method si "App" yang tadi
-//void Server::route(facebook::jsi::Runtime &rt,
-//                   std::string &&path,
-//                   std::function<void (const facebook::jsi::Object requestObject)> callback) {
-//  auto nApp = app->any(std::move(path), [&rt, &callback](auto *res, auto *req) {
-//    __android_log_print(ANDROID_LOG_INFO, "echoserver", "route call");
-//    RequestJsObject requestJsObject(req);
-//    facebook::jsi::Object requestObject = facebook::jsi::Object::createFromHostObject(rt,
-//                                                                                      std::make_shared<RequestJsObject>(std::move(requestJsObject)));
-//
-//
-//    callback(std::move(requestObject));
-//
-//    // for a test response
-//    res->end("Hello World");
-//  });
-//
-//  app = &nApp;
-//}
-
-void Server::listen(int &&port,
-                    std::function<void ()> &listenerCallback) {
-  std::function<void (int &wPort, std::function<void ()> &wListenerCallback)> serverWorker = [this](auto &wPort, auto &wListenerCallback) {
+void Server::listen(int &port,
+                    std::function<void ()> listenerCallback,
+                    std::function<void ()> listenerFailureCallback,
+                    std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> &routeState)> routeCallback) {
+  // +++++ server worker +++++
+  std::function<void (int &wPort, std::function<void ()> &wListenerCallback, std::function<void ()> &wListenerFailureCallback, std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> &routeState)> &wRouteCallback)> serverWorker = [this](auto &wPort, auto &wListenerCallback, auto &wListenerFailureCallback, auto &wRouteCallback) {
     this->serverLoop = uWS::Loop::get();
 
-    uWS::App().any("/*", [this](auto *res, auto *req) {
-      auto pendingRoute = std::make_shared<PendingRoute>(RequestHostObject(req), res);
-
-      res->onAborted([pendingRoute]() {
-        pendingRoute->aborted = true;
-      });
+    uWS::App().any("/*", [this, &wRouteCallback](auto *res, auto *req) {
+      auto pendingRouteState = std::make_shared<PendingRouteState>(req, res);
 
       std::string requestID;
       {
@@ -59,18 +37,39 @@ void Server::listen(int &&port,
         }
       }
 
-      this->pendingRoutes[requestID] = pendingRoute;
+      // Store pending route
+      this->pendingRoutes[requestID] = pendingRouteState;
 
-      // callback
-    });
+      // handle client disconnect
+      res->onAborted([this, &pendingRouteState, &requestID]() {
+        pendingRouteState->aborted = true;
+        std::lock_guard<std::mutex> lock(this->pendingMutex);
+        this->pendingRoutes.erase(requestID);
+      });
+
+      // Notify JS callback
+      // ReactNativeEchoJsi.httpServerListen( 4040, () => console.log("on listen"), (req) => console.log("on request") )
+      wRouteCallback(requestID, pendingRouteState->state);
+    }).listen(wPort, [this, &wListenerCallback, &wListenerFailureCallback](auto *listenerSocket) {
+      this->listenSocket = listenerSocket;
+
+      if(listenerSocket) {
+        wListenerCallback();
+      } else {
+        wListenerFailureCallback();
+      }
+    }).run();
   };
+  // ---- server worker -----
 
   // To prevent the UI thread is getting blocked
   // Run the server from another thread
   // https://github.com/uNetworking/uWebSockets/issues/1858#issuecomment-2907728248
   this->serverThread = std::thread(std::move(serverWorker),
-                     std::ref(port),
-                     listenerCallback);
+                                   std::ref(port),
+                                   std::ref(listenerCallback),
+                                   std::ref(listenerFailureCallback),
+                                   std::ref(routeCallback));
 
   this->serverThread.join();
 }
@@ -82,14 +81,47 @@ void Server::close() {
         std::lock_guard<std::mutex> lock(this->listenSocketMutex);
         if (this->listenSocket) {
           us_listen_socket_close(0, listenSocket);
-          listenSocket = nullptr;
+          this->listenSocket = nullptr;
         }
     }));
   }
+}
 
-//  if(serverThread && serverThread->joinable()) {
-//    serverThread->join();
-//  }
+/**
+ * Called from JS / React Native thread
+ */
+void Server::routeWriteResponse(const std::string &requestID,
+                                std::function<std::optional<std::string_view> (const std::shared_ptr<RouteState> &routeState)> &&resCallback) {
+  std::shared_ptr<PendingRouteState> routeState;
+  {
+    std::lock_guard<std::mutex> lock(this->pendingMutex);
+    auto it = this->pendingRoutes.find(requestID);
+
+    if(it == this->pendingRoutes.end()) {
+      // there is no pending request found
+      return;
+    }
+
+    routeState = it->second;
+    this->pendingRoutes.erase(it);
+  }
+
+  auto bodyResponse = resCallback(routeState->state);
+
+  // Wake uWS loop safely
+  this->serverLoop->defer([&routeState, &bodyResponse]() {
+    if(routeState->aborted || routeState->completed) {
+      return;
+    }
+
+    routeState->completed = true;
+
+    if(bodyResponse.has_value()) {
+      routeState->state->httpResponse->end(bodyResponse.value());
+    } else {
+      routeState->state->httpResponse->endWithoutBody();
+    }
+  });
 }
 
 } // namespace react_native_echo

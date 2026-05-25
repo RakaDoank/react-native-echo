@@ -1,6 +1,6 @@
-import type {
-	Request,
-} from "../../modules/http/Request"
+// import type {
+// 	Request,
+// } from "../../modules/http/Request"
 
 import NativeReactNativeEcho from "./NativeReactNativeEcho"
 
@@ -45,6 +45,8 @@ export namespace ReactNativeEchoJsi {
 			serverID: string,
 			port: number,
 			callback: () => void,
+			failureCallback: () => void,
+			onRouteRequest: (requestObject: object) => void,
 		) => void,
 
 		httpServerClose: (
@@ -57,13 +59,13 @@ export namespace ReactNativeEchoJsi {
 		// 	request: Request,
 		// ) => void,
 
-		httpServerRoute: (
-			serverID: string,
-			path: string,
-			callback: (
-				request: Request,
-			) => void,
-		) => void,
+		// httpServerRoute: (
+		// 	serverID: string,
+		// 	path: string,
+		// 	callback: (
+		// 		request: Request,
+		// 	) => void,
+		// ) => void,
 
 		httpServerRouteWriteResponse: (
 			serverID: string,
@@ -82,7 +84,7 @@ export namespace ReactNativeEchoJsi {
 
 	export const httpServerClose = global.__react_native_echo!.httpServerClose
 
-	export const httpServerRoute = global.__react_native_echo!.httpServerRoute
+	// export const httpServerRoute = global.__react_native_echo!.httpServerRoute
 
 	// export const httpServerRouteOnRequest = global.__react_native_echo!.httpServerRouteOnRequest
 

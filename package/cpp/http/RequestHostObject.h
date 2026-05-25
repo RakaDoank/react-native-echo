@@ -1,6 +1,6 @@
 #include <jsi/jsi.h>
 #include <vector>
-#include <uWebSockets/HttpParser.h>
+#include "uWebSockets/HttpParser.h"
 #include "uWebSockets/HttpContextData.h"
 
 namespace react_native_echo {
