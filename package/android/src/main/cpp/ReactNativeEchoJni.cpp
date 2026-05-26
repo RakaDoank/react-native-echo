@@ -10,7 +10,8 @@ struct ReactNativeEchoJni : facebook::jni::JavaClass<ReactNativeEchoJni> {
 
   static void registerNatives() {
     javaClassStatic()->registerNatives({
-      makeNativeMethod("installJsi", ReactNativeEchoJni::installJsi)
+      makeNativeMethod("installJsi", ReactNativeEchoJni::installJsi),
+      makeNativeMethod("invalidateJsi", ReactNativeEchoJni::invalidateJsi)
     });
   }
 
@@ -24,7 +25,7 @@ private:
     react_native_echo::install(*jsiRuntime, jsCallInvoker);
   }
 
-  static void invalidateJsi() {
+  static void invalidateJsi(facebook::jni::alias_ref<facebook::jni::JObject> thiz) {
     react_native_echo::invalidate();
   }
 };

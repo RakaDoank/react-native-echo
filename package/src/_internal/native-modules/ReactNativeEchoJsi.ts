@@ -2,6 +2,10 @@
 // 	Request,
 // } from "../../modules/http/Request"
 
+// DO NOT USE THIS ANYMORE
+// Just use the Turbo Modules Xplat
+// This hacky way is not recommended, and just adding more headache.
+
 import NativeReactNativeEcho from "./NativeReactNativeEcho"
 
 declare namespace global {
@@ -23,6 +27,8 @@ if(!global.__react_native_echo) {
 		throw new Error("Something went wrong in the react-native-echo native module.")
 	}
 }
+
+console.log("global ", global.__react_native_echo)
 
 export namespace ReactNativeEchoJsi {
 

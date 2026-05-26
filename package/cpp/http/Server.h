@@ -1,5 +1,8 @@
+#pragma once
 #include <atomic>
 #include <functional>
+#include <jsi/jsi.h>
+#include <memory>
 #include <optional>
 #include <string>
 #include <queue>
@@ -61,10 +64,11 @@ public:
 
   ~Server();
 
-  void listen(int &port,
-              std::function<void ()> listenerCallback,
-              std::function<void ()> listenerFailureCallback,
-              std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> &routeState)> routeCallback);
+  void listen(std::shared_ptr<facebook::jsi::Object> jsListenerCallback,
+              int &port,
+              const std::function<void (std::shared_ptr<facebook::jsi::Object> jsListenerCallback)> &listenerCallback,
+              const std::function<void ()> &listenerFailureCallback,
+              const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> &routeState)> &routeCallback);
 
   void close();
 

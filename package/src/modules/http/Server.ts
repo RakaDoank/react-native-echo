@@ -224,7 +224,15 @@ export class Server implements ServerRouteInterface {
 					.httpServerListen(
 						this.id,
 						4040,
-						() => onStart?.(),
+						() => {
+							onStart?.()
+						},
+						() => {
+							console.log("onFailure listen")
+						},
+						(req) => {
+							console.log("on http ", req)
+						},
 					)
 				// NativeReactNativeEcho
 				// 	.httpServerListen(this.id, port)
@@ -282,16 +290,16 @@ export class Server implements ServerRouteInterface {
 		errorHandler?: RouteErrorHandler,
 	) {
 		if(this.port == -1) {
-			// this.registeredRoute[path] = {
-			// 	handler,
-			// 	errorHandler,
-			// }
-			ReactNativeEchoJsi
-				.httpServerRoute(
-					this.id,
-					path,
-					this.nativeRouteHandler.bind(this, handler, errorHandler),
-				)
+			this.registeredRoute[path] = {
+				handler,
+				errorHandler,
+			}
+			// ReactNativeEchoJsi
+			// 	.httpServerRoute(
+			// 		this.id,
+			// 		path,
+			// 		this.nativeRouteHandler.bind(this, handler, errorHandler),
+			// 	)
 		}
 	}
 

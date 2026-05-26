@@ -50,7 +50,7 @@ void install(facebook::jsi::Runtime &rt,
 
   auto httpServerListen = facebook::jsi::Function::createFromHostFunction(rt,
                                                                           facebook::jsi::PropNameID::forAscii(rt, "httpServerListen"),
-                                                                          3,
+                                                                          5,
                                                                           [](facebook::jsi::Runtime &runtime,
                                                                                      const facebook::jsi::Value &thisValue,
                                                                                      const facebook::jsi::Value *arguments,
@@ -59,17 +59,21 @@ void install(facebook::jsi::Runtime &rt,
     int paramPort = static_cast<int>(arguments[1].asNumber());
 
     // https://github.com/ammarahm-ed/react-native-jsi-template/blob/master/cpp/example.cpp#L48
-    auto paramCallbackOnListen = arguments[2].getObject(runtime).getFunction(runtime);
+//    auto paramCallbackOnListen = arguments[2].getObject(runtime).getFunction(runtime);
+//    auto args = std::make_shared<facebook::jsi::Value>(&arguments);
+    auto paramCallbackOnListen = std::make_shared<facebook::jsi::Object>(arguments[2].getObject(runtime));
     auto paramCallbackOnListenFailure = arguments[3].getObject(runtime).getFunction(runtime);
     auto paramCallbackOnRouteRequest = arguments[4].getObject(runtime).getFunction(runtime);
 
     auto serverPtr = getServerByID(paramServerID);
     if(serverPtr) {
-      serverPtr->listen(paramPort, [&paramCallbackOnListen]() {
+      serverPtr->listen(paramCallbackOnListen, paramPort, [&runtime](std::shared_ptr<facebook::jsi::Object> jsListenerCallback) {
+        __android_log_print(ANDROID_LOG_INFO, "echoserver", "on listen");
         // listen success callback
-        jsCallInvoker->invokeAsync([&paramCallbackOnListen](auto &jsRuntime) {
-          paramCallbackOnListen.call(jsRuntime, facebook::jsi::Value::undefined());
-        });
+        // This always crash
+        // For historical reason and as a learn source for me personally
+        // I'm migrating to the Turbo Modules way to reduce these hacky way.
+//        jsListenerCallback->asFunction(runtime).call(runtime, facebook::jsi::Value::undefined());
       }, [&paramCallbackOnListenFailure]() {
         // listen failure callback
         jsCallInvoker->invokeAsync([&paramCallbackOnListenFailure](auto &jsRuntime) {
@@ -130,7 +134,7 @@ void install(facebook::jsi::Runtime &rt,
                                    [](const std::shared_ptr<RouteState> &routeState) -> std::optional<std::string_view> {
           routeState->httpResponse->writeStatus("200 OK");
           // TODO : Resolve the body from JS object to the actual response
-          return "Hello world";
+          return "Hello world 1";
         });
       }
     }

@@ -1,3 +1,4 @@
+#pragma once
 #include <jsi/jsi.h>
 #include <vector>
 #include "uWebSockets/HttpParser.h"

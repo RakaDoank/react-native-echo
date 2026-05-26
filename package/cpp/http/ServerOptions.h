@@ -1,3 +1,4 @@
+#pragma once
 #include <jsi/jsi.h>
 
 namespace react_native_echo {
