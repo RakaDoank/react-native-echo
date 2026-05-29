@@ -64,11 +64,10 @@ public:
 
   ~Server();
 
-  void listen(std::shared_ptr<facebook::jsi::Object> jsListenerCallback,
-              int &port,
-              const std::function<void (std::shared_ptr<facebook::jsi::Object> jsListenerCallback)> &listenerCallback,
+  void listen(int &port,
+              const std::function<void ()> &listenerCallback,
               const std::function<void ()> &listenerFailureCallback,
-              const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> &routeState)> &routeCallback);
+              const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> routeState)> &routeCallback);
 
   void close();
 

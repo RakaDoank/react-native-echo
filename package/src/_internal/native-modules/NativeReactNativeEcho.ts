@@ -4,12 +4,10 @@ import {
 	type TurboModule,
 } from "react-native"
 
+/**
+ * This spec is only for C++.
+ */
 export interface Spec extends TurboModule {
-
-	/**
-	 * Install the C++ methods to the JavaScript global instance
-	 */
-	install: () => boolean,
 
 	// +++++ HTTP +++++
 	httpCreateServer: (
@@ -22,7 +20,10 @@ export interface Spec extends TurboModule {
 	httpServerListen: (
 		serverID: string,
 		port: number,
-	) => Promise<void>,
+		onListen: () => void,
+		onListenFailure: () => void,
+		onRoute: () => void,
+	) => void,
 
 	httpServerClose: (
 		serverID: string,
@@ -31,7 +32,7 @@ export interface Spec extends TurboModule {
 	/**
 	 * Emit a object that contain informations to build an Request Web API
 	 */
-	httpRequestListener: CodegenTypes.EventEmitter<{
+	httpServerRequestListener: CodegenTypes.EventEmitter<{
 		serverID: string,
 		requestID: string,
 
@@ -52,7 +53,7 @@ export interface Spec extends TurboModule {
 		// ----- Headers -----
 	}>,
 
-	httpWriteResponse: (
+	httpServerWriteResponse: (
 		serverID: string,
 		requestID: string,
 
@@ -61,22 +62,19 @@ export interface Spec extends TurboModule {
 		 * Please use `_response-to-codegen-object` function to convert the `Response` class to plain object.
 		 */
 		responseObject: CodegenTypes.UnsafeObject,
-	) => Promise<void>,
+	) => void,
 
-	httpGetRequestFormData: (
+	httpServerRequestFormData: (
 		serverID: string,
 		requestID: string,
-	) => Promise<CodegenTypes.UnsafeObject>,
+		onResult: (data: CodegenTypes.UnsafeObject) => void,
+	) => void,
 
-	// httpGetRequestJson: (
-	// 	serverID: string,
-	// 	requestID: string,
-	// ) => Promise<string>,
-
-	httpGetRequestText: (
+	httpServerRequestText: (
 		serverID: string,
 		requestID: string,
-	) => Promise<string>,
+		onResult: (data: string) => void,
+	) => void,
 	// ----- HTTP -----
 
 }

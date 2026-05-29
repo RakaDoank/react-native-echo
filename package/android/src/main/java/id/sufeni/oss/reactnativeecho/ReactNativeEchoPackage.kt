@@ -8,27 +8,28 @@ import com.facebook.react.module.model.ReactModuleInfoProvider
 
 class ReactNativeEchoPackage : BaseReactPackage() {
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
-    return when (name) {
-      ReactNativeEchoModule.NAME -> {
-        ReactNativeEchoModule(reactContext)
-      }
-      else -> {
-        null
-      }
-    }
+//    return when (name) {
+//      ReactNativeEchoModule.NAME -> {
+//        ReactNativeEchoModule(reactContext)
+//      }
+//      else -> {
+//        null
+//      }
+//    }
+    return null
   }
 
   override fun getReactModuleInfoProvider() = ReactModuleInfoProvider {
     mapOf(
       // http
-      ReactNativeEchoModule.NAME to ReactModuleInfo(
-        name = ReactNativeEchoModule.NAME,
-        className = ReactNativeEchoModule.NAME,
-        canOverrideExistingModule = false,
-        needsEagerInit = false,
-        isCxxModule = false,
-        isTurboModule = true
-      ),
+//      ReactNativeEchoModule.NAME to ReactModuleInfo(
+//        name = ReactNativeEchoModule.NAME,
+//        className = ReactNativeEchoModule.NAME,
+//        canOverrideExistingModule = false,
+//        needsEagerInit = false,
+//        isCxxModule = false,
+//        isTurboModule = true
+//      ),
 
       // ws
     )

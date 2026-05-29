@@ -16,11 +16,10 @@ Server::~Server() {
   this->close();
 }
 
-void Server::listen(std::shared_ptr<facebook::jsi::Object> jsListenerCallback,
-                    int &port,
-                    const std::function<void (std::shared_ptr<facebook::jsi::Object> jsListenerCallback)> &listenerCallback,
+void Server::listen(int &port,
+                    const std::function<void ()> &listenerCallback,
                     const std::function<void ()> &listenerFailureCallback,
-                    const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> &routeState)> &routeCallback) {
+                    const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> routeState)> &routeCallback) {
   // +++++ server worker +++++
 //  std::function<void (int &wPort, std::function<void ()> &wListenerCallback, std::function<void ()> &wListenerFailureCallback, std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> &routeState)> &wRouteCallback)> serverWorker = [this](auto &wPort, auto &wListenerCallback, auto &wListenerFailureCallback, auto &wRouteCallback) {
 //    this->serverLoop = uWS::Loop::get();
@@ -122,8 +121,8 @@ void Server::listen(std::shared_ptr<facebook::jsi::Object> jsListenerCallback,
 //    listenerCallback_(rt_);
 //  };
 
-  this->serverThread = std::thread([jsListenerCallback, listenerCallback]() {
-    listenerCallback(jsListenerCallback);
+  this->serverThread = std::thread([listenerCallback]() mutable {
+    listenerCallback();
   });
 
 // doesn't work
