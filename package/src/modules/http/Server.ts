@@ -219,7 +219,7 @@ export class Server implements ServerRouteInterface {
 				NativeReactNativeEcho
 					.httpServerListen(
 						this.id,
-						4040,
+						port,
 						() => {
 							onStart?.()
 						},

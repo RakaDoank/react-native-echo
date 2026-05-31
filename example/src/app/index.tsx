@@ -24,7 +24,7 @@ export default function Page() {
 			return Echo.Http.Response.json({ yeay: true })
 		})
 
-		server.listen(4040, () => {
+		server.listen(5000, () => {
 			console.log("ONSTART")
 		})
 

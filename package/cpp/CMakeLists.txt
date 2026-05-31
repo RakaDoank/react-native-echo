@@ -17,9 +17,6 @@ if(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a" OR CMAKE_ANDROID_ARCH_ABI STREQUA
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
 endif()
 
-# message("CMAKE echo LIB_ANDROID_DIR = ${LIB_ANDROID_DIR}")
-# message("CMAKE echo LIB_ANDROID_GENERATED_JNI_DIR = ${LIB_ANDROID_GENERATED_JNI_DIR}")
-
 find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
 
@@ -67,27 +64,6 @@ target_include_directories(
 	${LIB_ANDROID_GENERATED_JNI_DIR}
 	"${LIB_ANDROID_GENERATED_JNI_DIR}/react/renderer/components/${LIB_CODEGEN_SPEC_NAME}"
 )
-
-# include module codegen directories
-# target_include_directories(
-# 	${PACKAGE_NAME}
-# 	PUBLIC
-# 	${LIB_ANDROID_GENERATED_JNI_DIR}
-# 	"${LIB_ANDROID_GENERATED_JNI_DIR}/react/renderer/components/${LIB_CODEGEN_SPEC_NAME}"
-# )
-
-# include generated Android JNI codegen
-# target_include_directories(
-# 	${PACKAGE_NAME}
-# 	PUBLIC
-# 	"build/generated/source/codegen/jni"
-# )
-
-# target_include_directories(
-# 	${PACKAGE_NAME}
-# 	PRIVATE
-# 	"../cpp/http"
-# )
 
 # +++++ uWebSockets C++ library +++++
 # Thanks to https://github.com/tony-go/cmake-uwebsockets/blob/main/CMakeLists.txt
@@ -151,12 +127,6 @@ target_include_directories(uWebSockets INTERFACE ${UWEBSOCKETS_WRAPPER_DIR})
 target_link_libraries(uWebSockets INTERFACE uSockets ${ZLIB_LIBRARIES})
 target_compile_options(uWebSockets INTERFACE -Wno-deprecated-declarations)
 # ----- uWebSockets C++ library -----
-
-# target_compile_definitions(
-#     ${PACKAGE_NAME}
-#     PRIVATE
-#     -DFOLLY_NO_CONFIG=1
-# )
 
 # Link Libraries
 target_link_libraries(

@@ -24,11 +24,11 @@ void Server::listen(int &port,
   // To prevent the UI thread is getting blocked
   // Run the server from another thread
   // https://github.com/uNetworking/uWebSockets/issues/1858#issuecomment-2907728248
-  this->serverThread = std::thread([this, listenerCallback, listenerFailureCallback, routeCallback, &port]() {
+  this->serverThread = std::thread([this, listenerCallback, listenerFailureCallback, routeCallback, port]() {
     this->serverLoop = uWS::Loop::get();
 
     uWS::App().any("/*", [this, routeCallback](auto *res, auto *req) {
-      auto pendingRouteState = std::make_shared<PendingRouteState>(req, res);
+//      auto pendingRouteState = std::make_shared<PendingRouteState>(req, res);
 
       std::string requestID;
       {
@@ -43,17 +43,18 @@ void Server::listen(int &port,
       }
 
       // Store pending route
-      this->pendingRoutes[requestID] = pendingRouteState;
-
-      // handle client disconnect
-      res->onAborted([this, &pendingRouteState, &requestID]() {
-        pendingRouteState->aborted = true;
-        std::lock_guard<std::mutex> lock(this->pendingRouteMutex);
-        this->pendingRoutes.erase(requestID);
-      });
-
-      // Notify JS callback
-      routeCallback(requestID, pendingRouteState->state);
+//      this->pendingRoutes[requestID] = pendingRouteState;
+//
+//      // handle client disconnect
+//      res->onAborted([this, &pendingRouteState, &requestID]() {
+//        pendingRouteState->aborted = true;
+//        std::lock_guard<std::mutex> lock(this->pendingRouteMutex);
+//        this->pendingRoutes.erase(requestID);
+//      });
+//
+//      // Notify JS callback
+//      routeCallback(requestID, pendingRouteState->state);
+      res->end("Hello World");
     }).listen("0.0.0.0", port, [this, &listenerCallback, &listenerFailureCallback](auto *listenedSocket) {
       this->listenSocket = listenedSocket;
       if(listenedSocket) {

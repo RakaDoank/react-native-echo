@@ -1,5 +1,6 @@
 #include "ReactNativeEchoModule.h"
 #include <algorithm>
+#include <android/log.h>
 #include <memory>
 #include <jsi/jsi.h>
 #include <string>
@@ -43,6 +44,7 @@ void ReactNativeEchoModule::httpServerListen(facebook::jsi::Runtime &rt,
                                              facebook::jsi::Function onRoute) {
   std::string strServerID = serverID.utf8(rt);
   auto intPort = static_cast<int>(port);
+  __android_log_print(ANDROID_LOG_INFO, "echoserver", "Port %d", intPort);
   auto serverPtr = getServerByID(strServerID);
 
   auto onListenerAsyncCallback = AsyncCallback(rt, std::move(onListener), this->jsInvoker_);
@@ -73,6 +75,12 @@ void ReactNativeEchoModule::httpServerRouteWriteResponse(facebook::jsi::Runtime 
                                                          facebook::jsi::String serverID,
                                                          facebook::jsi::String requestID,
                                                          facebook::jsi::Object responseObject) {
+//  std::string strServerID = serverID.utf8(rt);
+//  auto serverPtr = getServerByID(strServerID);
+//
+//  if(serverPtr) {
+//    serverPtr->routeWriteResponse();
+//  }
   // TODO
 }
 
