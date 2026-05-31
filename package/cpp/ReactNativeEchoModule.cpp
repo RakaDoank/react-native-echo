@@ -1,4 +1,4 @@
-#include "ReactNativeEchoModule.hpp"
+#include "ReactNativeEchoModule.h"
 #include <algorithm>
 #include <memory>
 #include <jsi/jsi.h>
@@ -69,10 +69,10 @@ void ReactNativeEchoModule::httpServerClose(facebook::jsi::Runtime &rt,
   }
 }
 
-void ReactNativeEchoModule::httpServerWriteResponse(facebook::jsi::Runtime &rt,
-                                                    facebook::jsi::String serverID,
-                                                    facebook::jsi::String requestID,
-                                                    facebook::jsi::Object responseObject) {
+void ReactNativeEchoModule::httpServerRouteWriteResponse(facebook::jsi::Runtime &rt,
+                                                         facebook::jsi::String serverID,
+                                                         facebook::jsi::String requestID,
+                                                         facebook::jsi::Object responseObject) {
   // TODO
 }
 

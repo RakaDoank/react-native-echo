@@ -53,7 +53,7 @@ export interface Spec extends TurboModule {
 		// ----- Headers -----
 	}>,
 
-	httpServerWriteResponse: (
+	httpServerRouteWriteResponse: (
 		serverID: string,
 		requestID: string,
 

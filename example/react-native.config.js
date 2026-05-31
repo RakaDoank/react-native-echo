@@ -6,6 +6,7 @@ const
 		require("../package/package.json")
 
 /**
+ * @type {import("@react-native-community/cli-types").Config}
  * @see {@link https://github.com/react-native-community/cli/blob/main/docs/configuration.md}
  */
 module.exports = {
@@ -15,13 +16,12 @@ module.exports = {
 		 */
 		[libraryPackageJson.name]: {
 			root: node_path.join(__dirname, "..", "package"),
-			platforms: {
-				// Codegen script incorrectly fails without this
-				// So we explicitly specify the platforms with empty object
-				ios: {},
-				android: {},
-				macos: {},
-			},
+			// platforms: {
+			// 	// Codegen script incorrectly fails without this
+			// 	// So we explicitly specify the platforms with empty object
+			// 	ios: {},
+			// 	macos: {},
+			// },
 		},
 	},
 }

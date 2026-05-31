@@ -28,9 +28,9 @@ export default function Page() {
 			console.log("ONSTART")
 		})
 
-		return () => {
-			server.close();
-		}
+		// return () => {
+		// 	server.close();
+		// }
 	}, [])
 
 	// useEffect(() => {

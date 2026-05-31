@@ -62,28 +62,54 @@ android {
         )
         arguments += listOf(
           "-DANDROID_STL=c++_shared",
-          "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+          "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
         )
+
+        buildTypes {
+          debug {
+            cppFlags += "-01 -g"
+          }
+          release {
+            cppFlags += "-02"
+          }
+        }
       }
     }
   }
 
-  externalNativeBuild {
-    cmake {
-      path("CMakeLists.txt")
-    }
-  }
+  // We don't need this, because the current CMakeLists.txt is
+  // already picked and linked by React Native (app level) to build C++ Turbo Module
+  // with an help by our `dependency.platform.android.cxxModuleCMakeListsPath` option in `react-native.config.js`.
+  // We may only need this for custom JNI
+//  externalNativeBuild {
+//    cmake {
+//      path("CMakeLists.txt")
+//    }
+//  }
 
   packaging {
     resources {
-      excludes.add("META-INF/INDEX.LIST")
+      excludes += listOf(
+        "META-INF",
+        "META-INF/**",
+        "**/libjsi.so",
+        "**/libc++_shared.so",
+        "**/libreact_render*.so",
+        "**/libreactnativejni.so",
+        "**/libreact_performance_timeline.so",
+        // In 0.76 multiple react-native's libraries were merged and these are the main new artifacts we're using.
+        // Some of above lib* names could be removed after we remove support for 0.76.
+        // https://github.com/facebook/react-native/pull/43909
+        // https://github.com/facebook/react-native/pull/46059
+        "**/libfbjni.so",
+        "**/libreactnative.so"
+      )
     }
   }
 
   buildFeatures {
     buildConfig = true
     prefab = true
-    prefabPublishing = true
   }
 
   buildTypes {

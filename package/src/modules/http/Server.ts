@@ -5,11 +5,7 @@ import {
 
 import * as Const from "../../_internal/const"
 
-// import NativeReactNativeEcho from "../../_internal/native-modules/NativeReactNativeEcho"
-
-import {
-	ReactNativeEchoJsi,
-} from "../../_internal/native-modules/ReactNativeEchoJsi"
+import NativeReactNativeEcho from "../../_internal/native-modules/NativeReactNativeEcho"
 
 import {
 	Response,
@@ -105,7 +101,7 @@ export class Server implements ServerRouteInterface {
 		// 		},
 		// 	)
 
-		ReactNativeEchoJsi
+		NativeReactNativeEcho
 			.httpCreateServer(
 				this.id,
 				{
@@ -137,8 +133,8 @@ export class Server implements ServerRouteInterface {
 		try {
 			responseToCodegenObject(response)
 				.then(data => {
-					ReactNativeEchoJsi
-						.httpServerRouteWriteResponse(
+					NativeReactNativeEcho
+						.httpServerWriteResponse(
 							this.id,
 							requestID,
 							data,
@@ -220,7 +216,7 @@ export class Server implements ServerRouteInterface {
 
 			if(this.port == -1) {
 				this.port = port
-				ReactNativeEchoJsi
+				NativeReactNativeEcho
 					.httpServerListen(
 						this.id,
 						4040,
@@ -230,8 +226,8 @@ export class Server implements ServerRouteInterface {
 						() => {
 							console.log("onFailure listen")
 						},
-						(req) => {
-							console.log("on http ", req)
+						() => {
+							console.log("on http ")
 						},
 					)
 				// NativeReactNativeEcho
@@ -261,7 +257,7 @@ export class Server implements ServerRouteInterface {
 			// this.requestListenerSubscription?.remove()
 			// this.requestListenerSubscription = null
 
-			ReactNativeEchoJsi.httpServerClose(this.id)
+			NativeReactNativeEcho.httpServerClose(this.id)
 			// NativeReactNativeEcho
 			// 	.httpServerClose(this.id)
 

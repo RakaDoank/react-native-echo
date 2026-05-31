@@ -5,7 +5,14 @@ module.exports = {
 	dependency: {
 		platforms: {
 			android: {
-				cxxModuleCMakeListsPath: "CMakeLists.txt",
+				cmakeListsPath: "build/generated/source/codegen/jni/CMakeLists.txt",
+
+				// our CMake project name
+				cxxModuleCMakeListsModuleName: "react-native-echo",
+
+				// relative from android directory
+				cxxModuleCMakeListsPath: "../cpp/CMakeLists.txt",
+
 				cxxModuleHeaderName: "ReactNativeEchoModule",
 			},
 		},

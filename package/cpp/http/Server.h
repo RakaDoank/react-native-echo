@@ -33,7 +33,7 @@ private:
   // ----- for socket closing -----
 
   // +++++ Pending Request +++++
-  std::mutex pendingMutex;
+  std::mutex pendingRouteMutex;
 
   /**
    * This is needed for JavaScript to get the `Request` Web API object,

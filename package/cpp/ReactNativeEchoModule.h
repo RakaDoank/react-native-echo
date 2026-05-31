@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ReactNativeEchoSpecsJSI.h>
-
 #include <memory>
 #include "http/Server.h"
 
@@ -26,10 +25,10 @@ public:
   void httpServerClose(facebook::jsi::Runtime &rt,
                        facebook::jsi::String serverID);
 
-  void httpServerWriteResponse(facebook::jsi::Runtime &rt,
-                               facebook::jsi::String serverID,
-                               facebook::jsi::String requestID,
-                               facebook::jsi::Object responseObject);
+  void httpServerRouteWriteResponse(facebook::jsi::Runtime &rt,
+                                    facebook::jsi::String serverID,
+                                    facebook::jsi::String requestID,
+                                    facebook::jsi::Object responseObject);
 
   void httpServerRequestFormData(facebook::jsi::Runtime &rt,
                                  facebook::jsi::String serverID,
