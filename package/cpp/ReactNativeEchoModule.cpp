@@ -1,10 +1,11 @@
 #include "ReactNativeEchoModule.h"
 #include <algorithm>
-#include <android/log.h>
 #include <memory>
 #include <jsi/jsi.h>
 #include <string>
+#include <utility>
 #include <vector>
+#include "RequestHostObject.h"
 #include "http/RouteState.h"
 #include "http/Server.h"
 #include "uWebSockets/App.h"
@@ -40,11 +41,9 @@ void ReactNativeEchoModule::httpServerListen(facebook::jsi::Runtime &rt,
                                              facebook::jsi::String serverID,
                                              double port,
                                              facebook::jsi::Function onListener,
-                                             facebook::jsi::Function onListenerFailure,
-                                             facebook::jsi::Function onRoute) {
+                                             facebook::jsi::Function onListenerFailure) {
   std::string strServerID = serverID.utf8(rt);
   auto intPort = static_cast<int>(port);
-  __android_log_print(ANDROID_LOG_INFO, "echoserver", "Port %d", intPort);
   auto serverPtr = getServerByID(strServerID);
 
   auto onListenerAsyncCallback = AsyncCallback(rt, std::move(onListener), this->jsInvoker_);
@@ -55,8 +54,6 @@ void ReactNativeEchoModule::httpServerListen(facebook::jsi::Runtime &rt,
       onListenerAsyncCallback_.call();
     }, [onListenerFailureAsyncCallback_ = std::move(onListenerFailureAsyncCallback)]() {
       onListenerFailureAsyncCallback_.call();
-    }, [](auto &requestID, auto routeState) {
-      // TODO
     });
   }
 }
@@ -71,30 +68,47 @@ void ReactNativeEchoModule::httpServerClose(facebook::jsi::Runtime &rt,
   }
 }
 
-void ReactNativeEchoModule::httpServerRouteWriteResponse(facebook::jsi::Runtime &rt,
-                                                         facebook::jsi::String serverID,
-                                                         facebook::jsi::String requestID,
-                                                         facebook::jsi::Object responseObject) {
-//  std::string strServerID = serverID.utf8(rt);
-//  auto serverPtr = getServerByID(strServerID);
-//
-//  if(serverPtr) {
-//    serverPtr->routeWriteResponse();
-//  }
+void ReactNativeEchoModule::httpServerRouteAny(facebook::jsi::Runtime &rt,
+                                               facebook::jsi::String serverID,
+                                               facebook::jsi::String path,
+                                               facebook::jsi::Function callback) {
+  std::string strServerID = serverID.utf8(rt);
+  auto serverPtr = getServerByID(strServerID);
+
+  auto asyncCallback = AsyncCallback(rt, std::move(callback), this->jsInvoker_);
+
+  if(serverPtr) {
+    serverPtr->routeAny(path.utf8(rt), [this, asyncCallback_ = std::move(asyncCallback)](auto *res, auto *req) {
+      asyncCallback_.call(); // TODO : capture a value/object return by this fn to write correct response
+    });
+  }
+}
+
+void ReactNativeEchoModule::httpServerRouteGet(facebook::jsi::Runtime &rt,
+                                               facebook::jsi::String serverID,
+                                               facebook::jsi::String path,
+                                               facebook::jsi::Function callback) {
   // TODO
 }
 
-void ReactNativeEchoModule::httpServerRequestFormData(facebook::jsi::Runtime &rt,
-                                                      facebook::jsi::String serverID,
-                                                      facebook::jsi::String requestID,
-                                                      facebook::jsi::Function onResult) {
+void ReactNativeEchoModule::httpServerRoutePost(facebook::jsi::Runtime &rt,
+                                                facebook::jsi::String serverID,
+                                                facebook::jsi::String path,
+                                                facebook::jsi::Function callback) {
   // TODO
 }
 
-void ReactNativeEchoModule::httpServerRequestText(facebook::jsi::Runtime &rt,
+void ReactNativeEchoModule::httpServerRoutePut(facebook::jsi::Runtime &rt,
+                                               facebook::jsi::String serverID,
+                                               facebook::jsi::String path,
+                                               facebook::jsi::Function callback) {
+  // TODO
+}
+
+void ReactNativeEchoModule::httpServerRouteDelete(facebook::jsi::Runtime &rt,
                                                   facebook::jsi::String serverID,
-                                                  facebook::jsi::String requestID,
-                                                  facebook::jsi::Function onResult) {
+                                                  facebook::jsi::String path,
+                                                  facebook::jsi::Function callback) {
   // TODO
 }
 

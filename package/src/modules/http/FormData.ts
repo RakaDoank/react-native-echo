@@ -9,7 +9,7 @@ import {
 /**
  * This class is a reimplementation of `FormData` from Web API to support the reimplemented `File` for the route request.
  * 
- * Due to the reimplementation, `FormData` is not support to store a `Blob` from the Web API standard.
+ * Due to the reimplementation, `FormData` is not supported to store a `Blob` from the Web API standard (yet).
  * 
  * To check if an entry is a file, you can simply check with `instanceof` operator test
  * @example

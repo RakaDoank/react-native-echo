@@ -22,58 +22,88 @@ export interface Spec extends TurboModule {
 		port: number,
 		onListen: () => void,
 		onListenFailure: () => void,
-		onRoute: () => void,
 	) => void,
 
 	httpServerClose: (
 		serverID: string,
 	) => void,
 
-	/**
-	 * Emit a object that contain informations to build an Request Web API
-	 */
-	httpServerRequestListener: CodegenTypes.EventEmitter<{
+	// +++++ We don't need these anymore +++++
+
+	// httpServerRequestListener: CodegenTypes.EventEmitter<{
+	// 	serverID: string,
+	// 	requestID: string,
+
+	// 	// +++++ Headers +++++
+	// 	method: string,
+	// 	headers: CodegenTypes.UnsafeObject,
+	// 	origin: {
+	// 		host: string,
+	// 		port: string,
+	// 		protocol: string,
+	// 	},
+	// 	url: {
+	// 		pathname: string,
+	// 		search: string,
+	// 	},
+	// 	referrer: string,
+	// 	referrerPolicy: string,
+	// 	// ----- Headers -----
+	// }>,
+
+	// httpServerRouteWriteTextResponse: (
+	// 	serverID: string,
+	// 	requestID: string,
+
+	// 	/**
+	// 	 * This is have to be the `Response` class but in plain object.
+	// 	 * Please use `_response-to-codegen-object` function to convert the `Response` class to plain object.
+	// 	 */
+	// 	responseObject: CodegenTypes.UnsafeObject,
+	// ) => void,
+
+	// httpServerRequestFormData: (
+	// 	serverID: string,
+	// 	requestID: string,
+	// 	onResult: (data: CodegenTypes.UnsafeObject) => void,
+	// ) => void,
+
+	// httpServerRequestText: (
+	// 	serverID: string,
+	// 	requestID: string,
+	// 	onResult: (data: string) => void,
+	// ) => void,
+
+	// ----- We don't need these anymore -----
+
+	httpServerRouteAny: (
 		serverID: string,
-		requestID: string,
-
-		// +++++ Headers +++++
-		method: string,
-		headers: CodegenTypes.UnsafeObject,
-		origin: {
-			host: string,
-			port: string,
-			protocol: string,
-		},
-		url: {
-			pathname: string,
-			search: string,
-		},
-		referrer: string,
-		referrerPolicy: string,
-		// ----- Headers -----
-	}>,
-
-	httpServerRouteWriteResponse: (
-		serverID: string,
-		requestID: string,
-
-		/**
-		 * This is have to be the `Response` class but in plain object.
-		 * Please use `_response-to-codegen-object` function to convert the `Response` class to plain object.
-		 */
-		responseObject: CodegenTypes.UnsafeObject,
+		path: string,
+		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
 	) => void,
 
-	httpServerRequestFormData: (
+	httpServerRouteGet: (
 		serverID: string,
-		requestID: string,
-		onResult: (data: CodegenTypes.UnsafeObject) => void,
+		path: string,
+		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
 	) => void,
 
-	httpServerRequestText: (
+	httpServerRoutePost: (
 		serverID: string,
-		requestID: string,
-		onResult: (data: string) => void,
+		path: string,
+		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
+	) => void,
+
+	httpServerRoutePut: (
+		serverID: string,
+		path: string,
+		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
+	) => void,
+
+	httpServerRouteDelete: (
+		serverID: string,
+		path: string,
+		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
 	) => void,
 	// ----- HTTP -----
 

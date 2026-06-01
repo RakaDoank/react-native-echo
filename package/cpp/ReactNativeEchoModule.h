@@ -19,26 +19,35 @@ public:
                         facebook::jsi::String serverID,
                         double port,
                         facebook::jsi::Function onListener,
-                        facebook::jsi::Function onListenerFailure,
-                        facebook::jsi::Function onRoute);
+                        facebook::jsi::Function onListenerFailure);
 
   void httpServerClose(facebook::jsi::Runtime &rt,
                        facebook::jsi::String serverID);
 
-  void httpServerRouteWriteResponse(facebook::jsi::Runtime &rt,
-                                    facebook::jsi::String serverID,
-                                    facebook::jsi::String requestID,
-                                    facebook::jsi::Object responseObject);
+  void httpServerRouteAny(facebook::jsi::Runtime &rt,
+                          facebook::jsi::String serverID,
+                          facebook::jsi::String path,
+                          facebook::jsi::Function callback);
 
-  void httpServerRequestFormData(facebook::jsi::Runtime &rt,
-                                 facebook::jsi::String serverID,
-                                 facebook::jsi::String requestID,
-                                 facebook::jsi::Function onResult);
+  void httpServerRouteGet(facebook::jsi::Runtime &rt,
+                          facebook::jsi::String serverID,
+                          facebook::jsi::String path,
+                          facebook::jsi::Function callback);
 
-  void httpServerRequestText(facebook::jsi::Runtime &rt,
+  void httpServerRoutePost(facebook::jsi::Runtime &rt,
+                           facebook::jsi::String serverID,
+                           facebook::jsi::String path,
+                           facebook::jsi::Function callback);
+
+  void httpServerRoutePut(facebook::jsi::Runtime &rt,
+                          facebook::jsi::String serverID,
+                          facebook::jsi::String path,
+                          facebook::jsi::Function callback);
+
+  void httpServerRouteDelete(facebook::jsi::Runtime &rt,
                              facebook::jsi::String serverID,
-                             facebook::jsi::String requestID,
-                             facebook::jsi::Function onResult);
+                             facebook::jsi::String path,
+                             facebook::jsi::Function callback);
 
 };
 

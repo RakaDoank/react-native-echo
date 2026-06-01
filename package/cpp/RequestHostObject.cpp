@@ -7,30 +7,30 @@
 namespace react_native_echo {
 
 // +++++ PRIVATES +++++
-
 facebook::jsi::Object RequestHostObject::headers(facebook::jsi::Runtime &rt) {
   auto headers = facebook::jsi::Object(rt);
   for(auto [key, val] : *(this->httpRequest)) {
     headers.setProperty(rt,
-                        static_cast<std::string>(key).c_str(),
-                        static_cast<std::string>(val));
+                        std::string(key).c_str(),
+                        std::string(val));
   }
-  return headers;
+  return std::move(headers);
 }
 
 facebook::jsi::String RequestHostObject::method(facebook::jsi::Runtime &rt) {
-  auto method = facebook::jsi::String::createFromAscii(rt, static_cast<std::string>(this->httpRequest->getMethod()));
+  auto method = facebook::jsi::String::createFromUtf8(rt, std::string(this->httpRequest->getCaseSensitiveMethod()));
   return method;
 }
 
 facebook::jsi::Object RequestHostObject::url(facebook::jsi::Runtime &rt) {
   auto url = facebook::jsi::Object(rt);
-  url.setProperty(rt, "path", static_cast<std::string>(this->httpRequest->getUrl()));
+  url.setProperty(rt,
+                  "path",
+                  std::string(this->httpRequest->getUrl()));
   // TODO search
   // url.setProperty(rt, "search", ...);
   return url;
 }
-
 // ----- PRIVATES -----
 
 facebook::jsi::Value RequestHostObject::get(facebook::jsi::Runtime &rt,
@@ -44,15 +44,15 @@ facebook::jsi::Value RequestHostObject::get(facebook::jsi::Runtime &rt,
   }
 
   if(*name == "headers") {
-    return RequestHostObject::headers(rt);
+    return this->headers(rt);
   }
 
   if(*name == "method") {
-    return RequestHostObject::method(rt);
+    return this->method(rt);
   }
 
   if(*name == "url") {
-    return RequestHostObject::url(rt);
+    return this->url(rt);
   }
 
   return facebook::jsi::Value::undefined();

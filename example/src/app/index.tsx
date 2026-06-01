@@ -20,7 +20,15 @@ export default function Page() {
 	useEffect(() => {
 		const server = new Echo.Http.Server()
 
-		server.route("/api/route", request => {
+		server.route("/api/route", () => {
+			return Echo.Http.Response.json({ yeay: true })
+		})
+
+		server.route("/hello/:name", () => {
+			return Echo.Http.Response.json({ yeay: true })
+		})
+
+		server.route("/test", () => {
 			return Echo.Http.Response.json({ yeay: true })
 		})
 

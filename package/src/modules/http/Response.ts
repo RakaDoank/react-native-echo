@@ -19,6 +19,10 @@ export class Response {
 	 * 
 	 * If you are in the future want to serve a remote file,
 	 * you can fetch the file first, and send to the client back with `Blob`.
+	 * 
+	 * In the middle of the process, JS side will append a custom header
+	 * to tell native side that your body string is an uri file to serve it,
+	 * and the custom header will be removed from the actual server response.
 	 */
 	static file(
 		uri: string,

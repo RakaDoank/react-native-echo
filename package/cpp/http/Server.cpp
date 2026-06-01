@@ -1,5 +1,5 @@
 #include "Server.h"
-#include <android/log.h>
+#include <chrono>
 #include <jsi/jsi.h>
 #include <memory>
 #include <optional>
@@ -19,51 +19,27 @@ Server::~Server() {
 
 void Server::listen(int &port,
                     const std::function<void ()> &listenerCallback,
-                    const std::function<void ()> &listenerFailureCallback,
-                    const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> routeState)> &routeCallback) {
+                    const std::function<void ()> &listenerFailureCallback) {
   // To prevent the UI thread is getting blocked
   // Run the server from another thread
   // https://github.com/uNetworking/uWebSockets/issues/1858#issuecomment-2907728248
-  this->serverThread = std::thread([this, listenerCallback, listenerFailureCallback, routeCallback, port]() {
-    this->serverLoop = uWS::Loop::get();
+  this->serverThread = std::thread([this, listenerCallback, listenerFailureCallback, port]() {
+    // move app instance due to different thread
+    uWS::App internalApp = uWS::App(std::move(this->app));
 
-    uWS::App().any("/*", [this, routeCallback](auto *res, auto *req) {
-//      auto pendingRouteState = std::make_shared<PendingRouteState>(req, res);
+    this->serverLoop = internalApp.getLoop();
 
-      std::string requestID;
-      {
-        const std::string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        std::random_device rd;
-        std::mt19937 mt(rd());
-        std::uniform_real_distribution<> dist(0, chars.size() - 1);
-
-        for(int i = 0; i < 16; ++i) {
-          requestID += chars[static_cast<int>(dist(mt))];
-        }
-      }
-
-      // Store pending route
-//      this->pendingRoutes[requestID] = pendingRouteState;
-//
-//      // handle client disconnect
-//      res->onAborted([this, &pendingRouteState, &requestID]() {
-//        pendingRouteState->aborted = true;
-//        std::lock_guard<std::mutex> lock(this->pendingRouteMutex);
-//        this->pendingRoutes.erase(requestID);
-//      });
-//
-//      // Notify JS callback
-//      routeCallback(requestID, pendingRouteState->state);
-      res->end("Hello World");
-    }).listen("0.0.0.0", port, [this, &listenerCallback, &listenerFailureCallback](auto *listenedSocket) {
+    internalApp.listen("0.0.0.0", port,
+                       [this, listenerCallback, listenerFailureCallback](auto *listenedSocket) {
       this->listenSocket = listenedSocket;
       if(listenedSocket) {
         listenerCallback();
       } else {
-        __android_log_print(ANDROID_LOG_INFO, "echoserver", "Not listened");
         listenerFailureCallback();
       }
-    }).run();
+    });
+
+    this->serverLoop->run();
   });
 
   this->serverThread.detach();
@@ -71,7 +47,7 @@ void Server::listen(int &port,
 
 void Server::close() {
   if(this->serverLoop) {
-    this->serverLoop->defer(static_cast<uWS::MoveOnlyFunction<void(void)> &&>([this]() {
+    this->serverLoop->defer(static_cast<uWS::MoveOnlyFunction<void (void)> &&>([this]() {
         // Close the listening sockets
         std::lock_guard<std::mutex> lock(this->listenSocketMutex);
         if (this->listenSocket) {
@@ -82,41 +58,35 @@ void Server::close() {
   }
 }
 
-/**
- * Called from JS / React Native thread
- */
-void Server::routeWriteResponse(const std::string &requestID,
-                                std::function<std::optional<std::string_view> (const std::shared_ptr<RouteState> &routeState)> &&resCallback) {
-  std::shared_ptr<PendingRouteState> routeState;
-  {
-    std::lock_guard<std::mutex> lock(this->pendingRouteMutex);
-    auto it = this->pendingRoutes.find(requestID);
-
-    if(it == this->pendingRoutes.end()) {
-      // there is no pending request found
-      return;
-    }
-
-    routeState = it->second;
-    this->pendingRoutes.erase(it);
-  }
-
-  auto bodyResponse = resCallback(routeState->state);
-
-  // Wake uWS loop safely
-  this->serverLoop->defer([&routeState, &bodyResponse]() {
-    if(routeState->aborted || routeState->completed) {
-      return;
-    }
-
-    routeState->completed = true;
-
-    if(bodyResponse.has_value()) {
-      routeState->state->httpResponse->end(bodyResponse.value());
-    } else {
-      routeState->state->httpResponse->endWithoutBody();
-    }
+void Server::routeAny(std::string &&path,
+                      std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler) {
+  this->app.any(path, [handler](auto *res, auto *req) {
+    handler(res, req);
+    auto now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    res->end(std::to_string(millis));
   });
+}
+
+void Server::routeGet(std::string &&path,
+                      std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> handler) {
+  // TODO
+}
+
+void Server::routePost(std::string &&path,
+                       std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> handler) {
+  // TODO
+}
+
+void Server::routePut(std::string &&path,
+                      std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> handler) {
+  // TODO
+}
+
+void Server::routeDelete(std::string &&path,
+                         std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> handler) {
+  // TODO
 }
 
 } // namespace react_native_echo

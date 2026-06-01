@@ -1,19 +1,19 @@
-import {
-	Platform,
-	type EventSubscription,
-} from "react-native"
+// import {
+// 	Platform,
+// 	type EventSubscription,
+// } from "react-native"
 
-import * as Const from "../../_internal/const"
+// import * as Const from "../../_internal/const"
 
 import NativeReactNativeEcho from "../../_internal/native-modules/NativeReactNativeEcho"
 
-import {
-	Response,
-} from "./Response"
+// import {
+// 	Response,
+// } from "./Response"
 
-import {
-	RouteError,
-} from "./RouteError"
+// import {
+// 	RouteError,
+// } from "./RouteError"
 
 import type {
 	RouteErrorHandler,
@@ -27,9 +27,9 @@ import {
 	ServerError,
 } from "./ServerError"
 
-import type {
-	ServerEventName,
-} from "./ServerEventName"
+// import type {
+// 	ServerEventName,
+// } from "./ServerEventName"
 
 import type {
 	ServerOptions,
@@ -39,15 +39,15 @@ import type {
 	ServerRouteInterface,
 } from "./ServerRouteInterface"
 
-import {
-	NativeRequest,
-} from "./_NativeRequest"
+// import {
+// 	NativeRequest,
+// } from "./_NativeRequest"
 
-import {
-	responseToCodegenObject,
-} from "./_response-to-codegen-object"
+// import {
+// 	responseToCodegenObject,
+// } from "./_response-to-codegen-object"
 
-import * as RouteErrorCode from "./route-error-code"
+// import * as RouteErrorCode from "./route-error-code"
 
 import * as ServerErrorCode from "./server-error-code"
 
@@ -57,31 +57,11 @@ export class Server implements ServerRouteInterface {
 
 	private port: number = -1
 
-	private requestListenerSubscription: EventSubscription | null = null
-
-	private registeredRoute: {
-		[Path in string]: {
-			handler: RouteHandler,
-			errorHandler?: RouteErrorHandler,
-		}
-	} =
-		{}
-
-	private registeredRouteWithMethod: {
-		[Path in string]: Partial<{
-			[Method in string]: {
-				handler: RouteHandler,
-				errorHandler?: RouteErrorHandler,
-			}
-		}>
-	} =
-		{}
+	// private registeredServerEvent: Partial<{
+	// 	[Name in ServerEventName]: () => void
+	// }> = {}
 
 	private routeErrorHandler: RouteErrorHandler | null = null
-
-	private registeredServerEvent: Partial<{
-		[Name in ServerEventName]: () => void
-	}> = {}
 
 	constructor(
 		/**
@@ -93,14 +73,6 @@ export class Server implements ServerRouteInterface {
 	) {
 		this.id = id || Math.random().toString()
 
-		// NativeReactNativeEcho
-		// 	.httpCreateServer(
-		// 		this.id,
-		// 		{
-		// 			routeHandlerTimeout: options?.routeHandlerTimeout ?? 180_000, // 3 minutes
-		// 		},
-		// 	)
-
 		NativeReactNativeEcho
 			.httpCreateServer(
 				this.id,
@@ -108,103 +80,6 @@ export class Server implements ServerRouteInterface {
 					routeHandlerTimeout: options?.routeHandlerTimeout ?? 180_000, // 3 minutes by default
 				},
 			)
-	}
-
-	private sendNativeResponse(
-		requestID: string,
-		response: Response,
-	): void {
-		// responseToCodegenObject(response)
-		// 	.then(data => {
-		// 		NativeReactNativeEcho
-		// 			.httpWriteResponse(
-		// 				this.id,
-		// 				requestID,
-		// 				data,
-		// 			)
-		// 			.then(this.registeredServerEvent?.on_response)
-		// 			.catch(err => {
-		// 				if(__DEV__) {
-		// 					console.log("react-native-echo :: Error occured when send native response", err)
-		// 				}
-		// 			})
-		// 	})
-
-		try {
-			responseToCodegenObject(response)
-				.then(data => {
-					NativeReactNativeEcho
-						.httpServerWriteResponse(
-							this.id,
-							requestID,
-							data,
-						)
-				})
-		} catch(err) {
-			if(__DEV__) {
-				console.log("react-native-echo :: Error occured when send native response", err)
-			}
-		}
-	}
-
-	private defaultErrorResponseHandler(
-		requestID: string,
-		data: {
-			status: number,
-			error?: {
-				code: string,
-				message?: string,
-			},
-			metadata?: unknown,
-		},
-	) {
-		this.sendNativeResponse(
-			requestID,
-			Response.json(
-				{
-					status: data.status,
-					error: data.error,
-					metadata: data.metadata,
-				},
-				{
-					status: data.status,
-				},
-			),
-		)
-	}
-
-	private registerRouteWithMethod(
-		route: {
-			path: string,
-			method: string,
-			handler: RouteHandler,
-			errorHandler?: RouteErrorHandler,
-		},
-	) {
-		if(this.port == -1) {
-			if(!this.registeredRouteWithMethod[route.path]) {
-				this.registeredRouteWithMethod[route.path] = {
-					[route.method]: {
-						handler: route.handler,
-						errorHandler: route.errorHandler,
-					},
-				}
-			} else {
-				this.registeredRouteWithMethod[route.path]![route.method] = {
-					handler: route.handler,
-					errorHandler: route.errorHandler,
-				}
-			}
-		}
-	}
-
-	private nativeRouteHandler(
-		handler: RouteHandler,
-		errorHandler: RouteErrorHandler | undefined,
-		requestObject: object,
-	) {
-		console.log("native route handler", requestObject)
-		// const request = new NativeRequest()
 	}
 
 	listen(
@@ -226,13 +101,7 @@ export class Server implements ServerRouteInterface {
 						() => {
 							console.log("onFailure listen")
 						},
-						() => {
-							console.log("on http ")
-						},
 					)
-				// NativeReactNativeEcho
-				// 	.httpServerListen(this.id, port)
-				// 	.then(onStart)
 			} else {
 				onError?.(
 					new ServerError({
@@ -254,19 +123,9 @@ export class Server implements ServerRouteInterface {
 
 	close() {
 		if(this.port != -1) {
-			// this.requestListenerSubscription?.remove()
-			// this.requestListenerSubscription = null
-
 			NativeReactNativeEcho.httpServerClose(this.id)
-			// NativeReactNativeEcho
-			// 	.httpServerClose(this.id)
 
 			this.port = -1
-			// this.registeredRoute = {}
-			// this.registeredRouteWithMethod = {}
-
-			// this.registeredServerEvent.on_close?.()
-			// this.registeredServerEvent = {}
 		}
 	}
 
@@ -286,16 +145,15 @@ export class Server implements ServerRouteInterface {
 		errorHandler?: RouteErrorHandler,
 	) {
 		if(this.port == -1) {
-			this.registeredRoute[path] = {
-				handler,
-				errorHandler,
-			}
-			// ReactNativeEchoJsi
-			// 	.httpServerRoute(
-			// 		this.id,
-			// 		path,
-			// 		this.nativeRouteHandler.bind(this, handler, errorHandler),
-			// 	)
+			NativeReactNativeEcho
+				.httpServerRouteAny(
+					this.id,
+					path,
+					() => {
+						// TODO
+						return {}
+					},
+				)
 		}
 	}
 
@@ -329,12 +187,17 @@ export class Server implements ServerRouteInterface {
 		handler: RouteHandler,
 		errorHandler?: RouteErrorHandler,
 	) {
-		this.registerRouteWithMethod({
-			path,
-			method: "GET",
-			handler,
-			errorHandler,
-		})
+		if(this.port == -1) {
+			NativeReactNativeEcho
+				.httpServerRouteGet(
+					this.id,
+					path,
+					() => {
+						// TODO
+						return {}
+					},
+				)
+		}
 	}
 
 	/**
@@ -349,12 +212,17 @@ export class Server implements ServerRouteInterface {
 		handler: RouteHandler,
 		errorHandler?: RouteErrorHandler,
 	) {
-		this.registerRouteWithMethod({
-			path,
-			method: "POST",
-			handler,
-			errorHandler,
-		})
+		if(this.port == -1) {
+			NativeReactNativeEcho
+				.httpServerRoutePost(
+					this.id,
+					path,
+					() => {
+						// TODO
+						return {}
+					},
+				)
+		}
 	}
 
 	/**
@@ -369,12 +237,17 @@ export class Server implements ServerRouteInterface {
 		handler: RouteHandler,
 		errorHandler?: RouteErrorHandler,
 	) {
-		this.registerRouteWithMethod({
-			path,
-			method: "PUT",
-			handler,
-			errorHandler,
-		})
+		if(this.port == -1) {
+			NativeReactNativeEcho
+				.httpServerRoutePut(
+					this.id,
+					path,
+					() => {
+						// TODO
+						return {}
+					},
+				)
+		}
 	}
 
 	/**
@@ -389,12 +262,17 @@ export class Server implements ServerRouteInterface {
 		handler: RouteHandler,
 		errorHandler?: RouteErrorHandler,
 	) {
-		this.registerRouteWithMethod({
-			path,
-			method: "DELETE",
-			handler,
-			errorHandler,
-		})
+		if(this.port == -1) {
+			NativeReactNativeEcho
+				.httpServerRouteDelete(
+					this.id,
+					path,
+					() => {
+						// TODO
+						return {}
+					},
+				)
+		}
 	}
 
 	// ----- Route -----

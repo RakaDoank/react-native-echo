@@ -87,7 +87,7 @@ target_compile_definitions(uSockets PRIVATE LIBUS_NO_SSL)
 FetchContent_Declare(
 	rnecho_uwebsockets_content
 	GIT_REPOSITORY https://github.com/uNetworking/uWebSockets
-	GIT_TAG v20.37.0
+	GIT_TAG v20.78.0
 	GIT_SHALLOW ON
 	GIT_SUBMODULES ""
 )

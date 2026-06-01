@@ -1,4 +1,5 @@
 #pragma once
+
 #include <atomic>
 #include <functional>
 #include <jsi/jsi.h>
@@ -9,7 +10,6 @@
 #include <thread>
 #include <unordered_map>
 #include <utility>
-#include "RouteState.h"
 #include "ServerOptions.h"
 #include "uWebSockets/App.h"
 
@@ -19,6 +19,12 @@ class Server {
 
 private:
   std::thread serverThread;
+
+  /**
+   * Be careful. Once the `listen` method has been invoked,
+   * this member has moved into another rvalue.
+   */
+  uWS::App app;
 
   /**
    * The main loop of the uWebSockets.
@@ -32,30 +38,6 @@ private:
   std::mutex listenSocketMutex;
   // ----- for socket closing -----
 
-  // +++++ Pending Request +++++
-  std::mutex pendingRouteMutex;
-
-  /**
-   * This is needed for JavaScript to get the `Request` Web API object,
-   * and to write a response from a route.
-   *
-   * This is just the struct, JS need to find the exact `PendingRoute` by the `requestID` they received.
-   */
-  struct PendingRouteState {
-    std::shared_ptr<RouteState> state;
-    std::atomic<bool> aborted = false;
-    std::atomic<bool> completed = false;
-
-    PendingRouteState(uWS::HttpRequest *httpRequest, uWS::HttpResponse<false> *httpResponse) : state(std::make_shared<RouteState>(httpRequest, httpResponse)) {};
-  };
-
-  /**
-   * Store the `PendingRoute` struct here whenever a route get requested
-   * with a string as the `requestID` and as the map's key.
-   */
-  std::unordered_map<std::string /* requestID */, std::shared_ptr<PendingRouteState>> pendingRoutes;
-  // ----- Pending Request -----
-
 public:
   std::string id;
   ServerOptions options;
@@ -66,13 +48,25 @@ public:
 
   void listen(int &port,
               const std::function<void ()> &listenerCallback,
-              const std::function<void ()> &listenerFailureCallback,
-              const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> routeState)> &routeCallback);
+              const std::function<void ()> &listenerFailureCallback);
+//              const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> routeState)> &routeCallback);
 
   void close();
 
-  void routeWriteResponse(const std::string &requestID,
-                          std::function<std::optional<std::string_view> (const std::shared_ptr<RouteState> &routeState)> &&resCallback);
+  void routeAny(std::string &&path,
+                std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+
+  void routeGet(std::string &&path,
+                std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+
+  void routePost(std::string &&path,
+                 std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+
+  void routePut(std::string &&path,
+                std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+
+  void routeDelete(std::string &&path,
+                   std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
 };
 
 }
