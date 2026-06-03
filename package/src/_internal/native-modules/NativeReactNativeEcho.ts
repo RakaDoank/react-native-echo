@@ -79,31 +79,46 @@ export interface Spec extends TurboModule {
 	httpServerRouteAny: (
 		serverID: string,
 		path: string,
-		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
+		callback: (
+			requestObject: CodegenTypes.UnsafeObject,
+			responseNotifier: (responseObject: CodegenTypes.UnsafeObject) => void,
+		) => void,
 	) => void,
 
 	httpServerRouteGet: (
 		serverID: string,
 		path: string,
-		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
+		callback: (
+			requestObject: CodegenTypes.UnsafeObject,
+			responseNotifier: (responseObject: CodegenTypes.UnsafeObject) => void,
+		) => void,
 	) => void,
 
 	httpServerRoutePost: (
 		serverID: string,
 		path: string,
-		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
+		callback: (
+			requestObject: CodegenTypes.UnsafeObject,
+			responseNotifier: (responseObject: CodegenTypes.UnsafeObject) => void,
+		) => void,
 	) => void,
 
 	httpServerRoutePut: (
 		serverID: string,
 		path: string,
-		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
+		callback: (
+			requestObject: CodegenTypes.UnsafeObject,
+			responseNotifier: (responseObject: CodegenTypes.UnsafeObject) => void,
+		) => void,
 	) => void,
 
 	httpServerRouteDelete: (
 		serverID: string,
 		path: string,
-		callback: (requestObject: CodegenTypes.UnsafeObject) => CodegenTypes.UnsafeObject,
+		callback: (
+			requestObject: CodegenTypes.UnsafeObject,
+			responseNotifier: (responseObject: CodegenTypes.UnsafeObject) => void,
+		) => void,
 	) => void,
 	// ----- HTTP -----
 

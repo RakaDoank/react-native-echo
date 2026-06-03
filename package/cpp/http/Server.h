@@ -49,24 +49,23 @@ public:
   void listen(int &port,
               const std::function<void ()> &listenerCallback,
               const std::function<void ()> &listenerFailureCallback);
-//              const std::function<void (const std::string &requestID, const std::shared_ptr<RouteState> routeState)> &routeCallback);
 
-  void close();
+  void close(const std::function<void ()> &onClose);
 
   void routeAny(std::string &&path,
-                std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+                const std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> &&handler);
 
   void routeGet(std::string &&path,
-                std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+                const std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> &handler);
 
   void routePost(std::string &&path,
-                 std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+                 const std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> &handler);
 
   void routePut(std::string &&path,
-                std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+                const std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> &handler);
 
   void routeDelete(std::string &&path,
-                   std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler);
+                   const std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> &handler);
 };
 
 }

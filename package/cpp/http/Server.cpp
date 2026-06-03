@@ -14,7 +14,7 @@
 namespace react_native_echo {
 
 Server::~Server() {
-  this->close();
+  this->close([]() {});
 }
 
 void Server::listen(int &port,
@@ -45,47 +45,59 @@ void Server::listen(int &port,
   this->serverThread.detach();
 }
 
-void Server::close() {
+void Server::close(const std::function<void ()> &onClose) {
   if(this->serverLoop) {
-    this->serverLoop->defer(static_cast<uWS::MoveOnlyFunction<void (void)> &&>([this]() {
+    this->serverLoop->defer(static_cast<uWS::MoveOnlyFunction<void (void)> &&>([this, onClose]() {
         // Close the listening sockets
         std::lock_guard<std::mutex> lock(this->listenSocketMutex);
         if (this->listenSocket) {
           us_listen_socket_close(0, listenSocket);
           this->listenSocket = nullptr;
+          onClose();
         }
     }));
   }
 }
 
 void Server::routeAny(std::string &&path,
-                      std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> handler) {
-  this->app.any(path, [handler](auto *res, auto *req) {
+                      const std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> &&handler) {
+  this->app.any(path, [handler](auto *res, auto *req) mutable {
     handler(res, req);
-    auto now = std::chrono::system_clock::now();
-    auto duration = now.time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    res->end(std::to_string(millis));
+//    res->end("Hola " + std::to_string(result));
+//    if(this->serverLoop) {
+//      int result = handler(res, req);
+
+//      res->end("Hola");
+//      this->serverLoop->defer([handler, res, req]() mutable {
+//        res->end("Hola");
+////        handler(res, req);
+//      });
+//    } else {
+//      auto now = std::chrono::system_clock::now();
+//      auto duration = now.time_since_epoch();
+//      auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+//      res->end(std::to_string(millis));
+//    }
   });
 }
 
 void Server::routeGet(std::string &&path,
-                      std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> handler) {
+                      const std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> &handler) {
   // TODO
 }
 
 void Server::routePost(std::string &&path,
-                       std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> handler) {
+                       const std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> &handler) {
   // TODO
 }
 
 void Server::routePut(std::string &&path,
-                      std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> handler) {
+                      const std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> &handler) {
   // TODO
 }
 
 void Server::routeDelete(std::string &&path,
-                         std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> handler) {
+                         const std::function<void(uWS::HttpResponse<false> *, uWS::HttpRequest *)> &handler) {
   // TODO
 }
 

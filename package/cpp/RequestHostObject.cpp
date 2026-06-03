@@ -1,8 +1,10 @@
 #include "RequestHostObject.h"
 #include <algorithm>
 #include <jsi/jsi.h>
+#include <react/bridging/Promise.h>
+#include <string_view>
 #include <vector>
-#include "uWebSockets/HttpContextData.h"
+#include "uWebSockets/HttpResponse.h"
 
 namespace react_native_echo {
 
@@ -25,11 +27,41 @@ facebook::jsi::String RequestHostObject::method(facebook::jsi::Runtime &rt) {
 facebook::jsi::Object RequestHostObject::url(facebook::jsi::Runtime &rt) {
   auto url = facebook::jsi::Object(rt);
   url.setProperty(rt,
-                  "path",
+                  "pathname",
                   std::string(this->httpRequest->getUrl()));
   // TODO search
   // url.setProperty(rt, "search", ...);
   return url;
+}
+
+facebook::jsi::Function RequestHostObject::text(facebook::jsi::Runtime &rt) {
+  return facebook::jsi::Function::createFromHostFunction(rt,
+                                                         facebook::jsi::PropNameID::forUtf8(rt, "text"),
+                                                         1,
+                                                         [this](facebook::jsi::Runtime &rt_1,
+                                                                 const facebook::jsi::Value &thisValue,
+                                                                 const facebook::jsi::Value *arguments,
+                                                                 size_t count) -> facebook::jsi::Value {
+    facebook::jsi::Function callback = arguments[0].getObject(rt_1).asFunction(rt_1);
+
+    this->httpResponse->onDataV2([&rt_1, callback_ = std::move(callback), buffer = std::unique_ptr<std::string>()](std::string_view chunk, uint64_t maxRemainingBodyLength) mutable {
+      if(maxRemainingBodyLength == 0) { // finish
+        if(buffer) {
+          callback_.call(rt_1, facebook::jsi::String::createFromUtf8(rt_1, *buffer));
+        } else {
+          callback_.call(rt_1, facebook::jsi::String::createFromUtf8(rt_1, std::string(chunk)));
+        }
+      } else {
+        if(!buffer) {
+          buffer = std::make_unique<std::string>(chunk);
+        } else {
+          buffer->append(chunk);
+        }
+      }
+    });
+
+    return facebook::jsi::Value::undefined();
+  });
 }
 // ----- PRIVATES -----
 

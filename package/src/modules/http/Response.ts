@@ -28,7 +28,7 @@ export class Response {
 		uri: string,
 		init?: ConstructorParameters<typeof Response>[1],
 	) {
-		const headers = createHeadersResponseInit(init?.headers)
+		const headers = initHeadersResponse(init?.headers)
 		// this header name will be removed later from the actual server response
 		// This is only for the native side purposes to tell it that string is a file uri
 		headers.append(
@@ -53,8 +53,8 @@ export class Response {
 		data: unknown,
 		init?: ConstructorParameters<typeof Response>[1],
 	) {
-		const headers = createHeadersResponseInit(init?.headers)
-		headers.append("Content-Type", "application/json")
+		const headers = initHeadersResponse(init?.headers)
+		headers.append("content-type", "application/json")
 
 		return new Response(
 			JSON.stringify(data),
@@ -135,7 +135,7 @@ export class Response {
 
 }
 
-function createHeadersResponseInit(
+function initHeadersResponse(
 	nextHeaders?:
 		| Headers
 		| Record<string, string>

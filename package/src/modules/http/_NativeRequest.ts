@@ -1,10 +1,6 @@
-import NativeReactNativeEcho, {
-	type Spec,
-} from "../../_internal/native-modules/NativeReactNativeEcho"
-
-import type {
-	File,
-} from "./File"
+// import type {
+// 	File,
+// } from "./File"
 
 import {
 	FormData,
@@ -14,11 +10,22 @@ import type {
 	Request,
 } from "./Request"
 
+// import {
+// 	NativeFile,
+// } from "./_NativeFile"
+
+import type {
+	NativeRequestObject,
+} from "./_NativeRequestObject"
+
 import {
-	NativeFile,
-} from "./_NativeFile"
+	NativeRequestSymbol,
+} from "./_native-request-symbol"
 
 export class NativeRequest implements Request {
+
+	// @ts-expect-error Used internally for Request symbol instance
+	private readonly [NativeRequestSymbol] = true
 
 	private _bodyUsed: boolean = false
 
@@ -35,28 +42,29 @@ export class NativeRequest implements Request {
 	readonly referrerPolicy: Request["referrerPolicy"]
 
 	constructor(
-		private serverID: string,
-		private requestID: string,
-		init: {
-			headers: Parameters<Parameters<Spec["httpRequestListener"]>[0]>[0]["headers"],
-			method: Request["method"],
-			origin: Request["origin"],
-			url: Request["url"],
-			referrer: Request["referrer"],
-			referrerPolicy: Request["referrerPolicy"],
-		},
+		private requestObject: NativeRequestObject,
 	) {
-		Object.entries(init.headers).forEach(([key, val]) => {
+		Object.entries(requestObject.headers).forEach(([key, val]) => {
 			if(typeof val == "string") {
 				this.headers.append(key, val)
 			}
 		})
 
-		this.method = init.method
-		this.url = init.url
-		this.origin = init.origin
-		this.referrer = init.referrer
-		this.referrerPolicy = init.referrerPolicy
+		this.method = requestObject.method
+		this.url = {
+			pathname: requestObject.url.pathname,
+			search: requestObject.url.search,
+		}
+
+		// TODO
+		this.origin = {
+			host: "",
+			port: "",
+			protocol: "",
+		}
+
+		this.referrer = this.headers.get("referrer") || ""
+		this.referrerPolicy = this.headers.get("referrer-policy") || ""
 	}
 
 	get bodyUsed() {
@@ -66,37 +74,40 @@ export class NativeRequest implements Request {
 	formData(): Promise<FormData> {
 		if(!this._bodyUsed) {
 			this._bodyUsed = true
-			return NativeReactNativeEcho.httpGetRequestFormData(this.serverID, this.requestID)
-				.then(object => {
-					if(object && typeof object == "object") {
-						const formData = new FormData()
-						Object.entries(object).forEach(([key, val]) => {
-							const value = val as string | File
+			// TODO
+			return Promise.resolve(new FormData())
 
-							if(typeof value == "string") {
-								formData.append(key, value)
-							} else if(
-								value &&
-								typeof value == "object" &&
-								typeof value.name == "string" &&
-								typeof value.uri == "string"
-							) {
-								formData.append(
-									key,
-									new NativeFile(value),
-								)
-							}
-						})
-						return formData
-					}
-					throw new TypeError("The body cannot be parsed as a FormData object")
-				})
-				.catch(error => {
-					if(error instanceof Error) {
-						throw error
-					}
-					throw new TypeError()
-				})
+			// return NativeReactNativeEcho.httpGetRequestFormData(this.serverID, this.requestID)
+			// 	.then(object => {
+			// 		if(object && typeof object == "object") {
+			// 			const formData = new FormData()
+			// 			Object.entries(object).forEach(([key, val]) => {
+			// 				const value = val as string | File
+
+			// 				if(typeof value == "string") {
+			// 					formData.append(key, value)
+			// 				} else if(
+			// 					value &&
+			// 					typeof value == "object" &&
+			// 					typeof value.name == "string" &&
+			// 					typeof value.uri == "string"
+			// 				) {
+			// 					formData.append(
+			// 						key,
+			// 						new NativeFile(value),
+			// 					)
+			// 				}
+			// 			})
+			// 			return formData
+			// 		}
+			// 		throw new TypeError("The body cannot be parsed as a FormData object")
+			// 	})
+			// 	.catch(error => {
+			// 		if(error instanceof Error) {
+			// 			throw error
+			// 		}
+			// 		throw new TypeError()
+			// 	})
 		} else {
 			throw new TypeError("The request body is disturbed or locked")
 		}
@@ -106,11 +117,11 @@ export class NativeRequest implements Request {
 	json(): Promise<any> {
 		if(!this._bodyUsed) {
 			this._bodyUsed = true
-			return NativeReactNativeEcho.httpGetRequestText(this.serverID, this.requestID)
-				.then(string => {
-					if(string) {
+			return this.text()
+				.then(text => {
+					if(text) {
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-						return JSON.parse(string)
+						return JSON.parse(text)
 					}
 					throw new SyntaxError("The request body cannot be parsed as JSON")
 				})
@@ -118,7 +129,7 @@ export class NativeRequest implements Request {
 					if(error instanceof Error) {
 						throw error
 					}
-					throw new TypeError()
+					throw new TypeError();
 				})
 		} else {
 			throw new TypeError("The request body is disturbed or locked")
@@ -128,19 +139,7 @@ export class NativeRequest implements Request {
 	text(): Promise<string> {
 		if(!this._bodyUsed) {
 			this._bodyUsed = true
-			return NativeReactNativeEcho.httpGetRequestText(this.serverID, this.requestID)
-				.then(string => {
-					if(typeof string == "string") {
-						return string
-					}
-					throw new TypeError("The body cannot be parsed as a FormData object")
-				})
-				.catch(error => {
-					if(error instanceof Error) {
-						throw error
-					}
-					throw new TypeError()
-				})
+			return new Promise<string>(this.requestObject.text)
 		} else {
 			throw new TypeError("The request body is disturbed or locked")
 		}

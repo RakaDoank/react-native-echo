@@ -20,16 +20,52 @@ export default function Page() {
 	useEffect(() => {
 		const server = new Echo.Http.Server()
 
-		server.route("/api/route", () => {
-			return Echo.Http.Response.json({ yeay: true })
+		server.route("/api/route", (request) => {
+			console.log("/api/route", request)
+			return Echo.Http.Response.json({
+				bool: true,
+				number: Math.random(),
+				string: "Ich komme aus Deutschland",
+				array: [{
+					bool: true,
+					number: Math.random(),
+					string: "Ich komme aus Osterreich",
+				}, {
+					bool: true,
+					number: Math.random(),
+					string: "Ich komme aus Frankreich",
+				}],
+			})
+
+			// mock long run
+			// return new Promise<Echo.Http.Response>(resolve => {
+			// 	setTimeout(() => {
+			// 		resolve(
+			// 			Echo.Http.Response.json({
+			// 				bool: true,
+			// 				number: Math.random(),
+			// 				string: "Ich komme aus Deutschland",
+			// 				array: [{
+			// 					bool: true,
+			// 					number: Math.random(),
+			// 					string: "Ich komme aus Osterreich",
+			// 				}, {
+			// 					bool: true,
+			// 					number: Math.random(),
+			// 					string: "Ich komme aus Frankreich",
+			// 				}],
+			// 			}),
+			// 		)
+			// 	}, 2000)
+			// })
 		})
 
 		server.route("/hello/:name", () => {
-			return Echo.Http.Response.json({ yeay: true })
+			return Echo.Http.Response.json({ hello: "world" })
 		})
 
 		server.route("/test", () => {
-			return Echo.Http.Response.json({ yeay: true })
+			return Echo.Http.Response.json({ test: "test" })
 		})
 
 		server.listen(5000, () => {

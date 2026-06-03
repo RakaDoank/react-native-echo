@@ -9,7 +9,7 @@ import type {
  * 
  * This is used by `Echo.Http.Server` internally to send the response in plain object to native side.
  */
-export async function responseToCodegenObject(
+export async function responseToObject(
 	response: Response,
 ) {
 

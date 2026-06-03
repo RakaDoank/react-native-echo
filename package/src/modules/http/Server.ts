@@ -1,11 +1,12 @@
-// import {
-// 	Platform,
-// 	type EventSubscription,
+// import type {
+// 	CodegenTypes,
 // } from "react-native"
 
 // import * as Const from "../../_internal/const"
 
-import NativeReactNativeEcho from "../../_internal/native-modules/NativeReactNativeEcho"
+import NativeReactNativeEcho, {
+	type Spec as NativeReactNativeEchoSpec,
+} from "../../_internal/native-modules/NativeReactNativeEcho"
 
 // import {
 // 	Response,
@@ -39,13 +40,17 @@ import type {
 	ServerRouteInterface,
 } from "./ServerRouteInterface"
 
-// import {
-// 	NativeRequest,
-// } from "./_NativeRequest"
+import {
+	NativeRequest,
+} from "./_NativeRequest"
 
-// import {
-// 	responseToCodegenObject,
-// } from "./_response-to-codegen-object"
+import type {
+	NativeRequestObject,
+} from "./_NativeRequestObject"
+
+import {
+	responseToObject,
+} from "./_response-to-object"
 
 // import * as RouteErrorCode from "./route-error-code"
 
@@ -80,6 +85,21 @@ export class Server implements ServerRouteInterface {
 					routeHandlerTimeout: options?.routeHandlerTimeout ?? 180_000, // 3 minutes by default
 				},
 			)
+	}
+
+	private nativeResponseHandler(
+		routeHandler: RouteHandler,
+		...[requestObject, responseNotifier]: Parameters<Parameters<NativeReactNativeEchoSpec["httpServerRouteAny"]>[2]>
+	) {
+		// TODO
+		Promise
+			.resolve(
+				routeHandler(new NativeRequest(requestObject as unknown as NativeRequestObject)),
+			)
+			.then(async response => {
+				const responseObject = await responseToObject(response)
+				responseNotifier(responseObject)
+			})
 	}
 
 	listen(
@@ -124,7 +144,6 @@ export class Server implements ServerRouteInterface {
 	close() {
 		if(this.port != -1) {
 			NativeReactNativeEcho.httpServerClose(this.id)
-
 			this.port = -1
 		}
 	}
@@ -149,9 +168,8 @@ export class Server implements ServerRouteInterface {
 				.httpServerRouteAny(
 					this.id,
 					path,
-					() => {
-						// TODO
-						return {}
+					(requestObject, responseNotifier) => {
+						this.nativeResponseHandler(handler, requestObject, responseNotifier)
 					},
 				)
 		}
@@ -192,9 +210,8 @@ export class Server implements ServerRouteInterface {
 				.httpServerRouteGet(
 					this.id,
 					path,
-					() => {
-						// TODO
-						return {}
+					(requestObject, responseNotifier) => {
+						this.nativeResponseHandler(handler, requestObject, responseNotifier)
 					},
 				)
 		}
@@ -217,9 +234,8 @@ export class Server implements ServerRouteInterface {
 				.httpServerRoutePost(
 					this.id,
 					path,
-					() => {
-						// TODO
-						return {}
+					(requestObject, responseNotifier) => {
+						this.nativeResponseHandler(handler, requestObject, responseNotifier)
 					},
 				)
 		}
@@ -242,9 +258,8 @@ export class Server implements ServerRouteInterface {
 				.httpServerRoutePut(
 					this.id,
 					path,
-					() => {
-						// TODO
-						return {}
+					(requestObject, responseNotifier) => {
+						this.nativeResponseHandler(handler, requestObject, responseNotifier)
 					},
 				)
 		}
@@ -267,9 +282,8 @@ export class Server implements ServerRouteInterface {
 				.httpServerRouteDelete(
 					this.id,
 					path,
-					() => {
-						// TODO
-						return {}
+					(requestObject, responseNotifier) => {
+						this.nativeResponseHandler(handler, requestObject, responseNotifier)
 					},
 				)
 		}
