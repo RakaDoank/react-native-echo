@@ -21,28 +21,6 @@ export class Request {
 	readonly method: string = ""
 
 	/**
-	 * The origin property gives connection information about the original caller
-	 * 
-	 * @example
-	 * ```js
-	 * {
-	 * 	host: "192.168.1.4",
-	 * 	port: "443", // it could be empty string
-	 * 	protocol: "http:"
-	 * }
-	 * ```
-	 */
-	readonly origin: { // not a standard Web API
-		readonly host: string,
-		readonly port: string,
-		readonly protocol: string,
-	} = {
-		host: "",
-		port: "",
-		protocol: "",
-	}
-
-	/**
 	 * @example
 	 * ```js
 	 * {
@@ -67,11 +45,19 @@ export class Request {
 	}
 
 	/**
-	 * The `Request.referer` from the Web API is actually mispelled
+	 * This is the correct spell of the Web API mistake's `referer`.
 	 */
 	readonly referrer: string = ""
 
 	readonly referrerPolicy: string = ""
+
+	/**
+	 * The `referer` from the Web API is actually mispelled.
+	 * This is an alias of `referrer`
+	 */
+	get referer(): string {
+		return this.referrer
+	}
 
 	formData(): Promise<FormData> {
 		throw new TypeError("The body cannot be parsed as a FormData object")

@@ -35,32 +35,23 @@ export class NativeRequest implements Request {
 
 	readonly url: Request["url"]
 
-	readonly origin: Request["origin"]
-
 	readonly referrer: Request["referrer"]
 
 	readonly referrerPolicy: Request["referrerPolicy"]
 
 	constructor(
-		private requestObject: NativeRequestObject,
+		private __nativeRequestObject: NativeRequestObject,
 	) {
-		Object.entries(requestObject.headers).forEach(([key, val]) => {
+		Object.entries(__nativeRequestObject.headers).forEach(([key, val]) => {
 			if(typeof val == "string") {
 				this.headers.append(key, val)
 			}
 		})
 
-		this.method = requestObject.method
+		this.method = __nativeRequestObject.method
 		this.url = {
-			pathname: requestObject.url.pathname,
-			search: requestObject.url.search,
-		}
-
-		// TODO
-		this.origin = {
-			host: "",
-			port: "",
-			protocol: "",
+			pathname: __nativeRequestObject.url.pathname,
+			search: __nativeRequestObject.url.search,
 		}
 
 		this.referrer = this.headers.get("referrer") || ""
@@ -69,6 +60,10 @@ export class NativeRequest implements Request {
 
 	get bodyUsed() {
 		return this._bodyUsed
+	}
+
+	get referer() {
+		return this.referrer
 	}
 
 	formData(): Promise<FormData> {
@@ -139,7 +134,7 @@ export class NativeRequest implements Request {
 	text(): Promise<string> {
 		if(!this._bodyUsed) {
 			this._bodyUsed = true
-			return new Promise<string>(this.requestObject.text)
+			return new Promise<string>(this.__nativeRequestObject.text)
 		} else {
 			throw new TypeError("The request body is disturbed or locked")
 		}
