@@ -1,6 +1,7 @@
 #include "ReactNativeEchoModule.h"
+#include <android/looper.h>
 #include <algorithm>
-#include <android/log.h>
+#include <chrono>
 #include <future>
 #include <memory>
 #include <iterator>
@@ -25,6 +26,92 @@ std::shared_ptr<react_native_echo::Server> getServerByID(std::string &serverID) 
     return serverID == item->id;
   });
   return *serverPtr;
+}
+
+void commonRouteHandler(const AsyncCallback<> &asyncCallback,
+                        uWS::HttpResponse<false> *res,
+                        uWS::HttpRequest *req) {
+
+  auto aborted = std::make_shared<bool>(false);
+  /**
+   * I don't know why without this,
+   * uWebSockets can't wait the route handler to be finished.
+   * I thought `onAborted` is just a callback.
+   */
+  res->onAborted([aborted]() {
+    *aborted = true;
+  });
+
+  asyncCallback.call([aborted, res, req](facebook::jsi::Runtime &rt1, facebook::jsi::Function &cb) mutable {
+    auto requestHostObject = std::make_shared<react_native_echo::RequestHostObject>(res, req);
+
+    if(!*aborted) {
+      cb.call(rt1,
+              // requestObject
+              facebook::jsi::Object::createFromHostObject(rt1, std::move(requestHostObject)),
+
+              // responseNotifier
+              facebook::jsi::Function::createFromHostFunction(rt1,
+                                                              facebook::jsi::PropNameID::forUtf8(rt1, "responseNotifier"),
+                                                              1,
+                                                              [aborted, res](facebook::jsi::Runtime &rt2,
+                                                                      const facebook::jsi::Value &thisValue,
+                                                                      const facebook::jsi::Value *arguments,
+                                                                      size_t count) mutable -> facebook::jsi::Value {
+                                                                /**
+                                                                 * Check the JS object definition at /src/modules/http/_response-to-object.ts
+                                                                 */
+                                                                auto responseObject = facebook::jsi::Object(arguments[0].asObject(rt2));
+
+                                                                if(!*aborted) {
+                                                                  // +++++ Status +++++
+                                                                  {
+                                                                    // Status needs to be written first before the header
+                                                                    // https://github.com/uNetworking/uWebSockets/issues/1808
+
+                                                                    auto status = std::to_string(static_cast<int>(responseObject.getProperty(rt2, "status").asNumber()));
+                                                                    auto statusText = responseObject.getProperty(rt2, "statusText").asString(rt2).utf8(rt2);
+
+                                                                    if(!statusText.empty()) {
+                                                                      status += " " + statusText;
+                                                                    }
+
+                                                                    res->writeStatus(status);
+                                                                  }
+                                                                  // ----- Status -----
+
+                                                                  // +++++ Write Header +++++
+                                                                  {
+                                                                    auto headers = responseObject.getProperty(rt2, "headers").asObject(rt2);
+                                                                    const auto headerNames = headers.getPropertyNames(rt2);
+                                                                    for(int i = 0; i < static_cast<int>(headerNames.length(rt2)); i++) {
+                                                                      facebook::jsi::String headerNameJsString = headerNames.getValueAtIndex(rt2, i).asString(rt2);
+                                                                      std::string headerValueStr = headers.getProperty(rt2, headerNameJsString).asString(rt2).utf8(rt2);
+
+                                                                      res->writeHeader(std::move(headerNameJsString).utf8(rt2), std::move(headerValueStr));
+                                                                    }
+                                                                  }
+                                                                  // ----- Write Header -----
+
+                                                                  // +++++ Write Response +++++
+                                                                  {
+                                                                    auto body = responseObject.getProperty(rt2, "body");
+                                                                    auto bodyType = responseObject.getProperty(rt2, "bodyType").asString(rt2);
+
+                                                                    if(bodyType.utf8(rt2) == "text" && body.isString()) {
+                                                                      res->end(body.asString(rt2).utf8(rt2));
+                                                                    } else {
+                                                                      res->end(R"({"message": "Internal server error"})");
+                                                                    }
+                                                                  }
+                                                                  // ----- Write Response -----
+                                                                }
+
+                                                                return facebook::jsi::Value::undefined();
+                                                              })); // cb.call
+    }
+
+  }); // asyncCallback.call
 }
 
 } // namespace
@@ -89,67 +176,10 @@ void ReactNativeEchoModule::httpServerRouteAny(facebook::jsi::Runtime &rt,
   auto asyncCallback = AsyncCallback(rt, std::move(callback), this->jsInvoker_);
 
   if(serverPtr) {
-    serverPtr->routeAny(path.utf8(rt), [&rt, asyncCallback_ = std::move(asyncCallback)](uWS::HttpResponse<false> *res, uWS::HttpRequest *req) {
-      auto responseObjectPromise = std::make_shared<std::promise<facebook::jsi::Object>>();
-      auto responseObjectFuture = responseObjectPromise->get_future();
-
-      asyncCallback_.call([res, req, responseObjectPromise](facebook::jsi::Runtime &rt_1, facebook::jsi::Function &cb) {
-        auto requestHostObject = std::make_shared<react_native_echo::RequestHostObject>(res, req);
-
-        cb.call(rt_1,
-                // requestObject
-                facebook::jsi::Object::createFromHostObject(rt_1, std::move(requestHostObject)),
-
-                // responseNotifier
-                facebook::jsi::Function::createFromHostFunction(rt_1,
-                                                                facebook::jsi::PropNameID::forUtf8(rt_1, "responseNotifier"),
-                                                                1,
-                                                                [responseObjectPromise](facebook::jsi::Runtime &rt_2,
-                                                                                        const facebook::jsi::Value &thisValue,
-                                                                                        const facebook::jsi::Value *arguments,
-                                                                                        size_t count) -> facebook::jsi::Value {
-                  /**
-                   * Check the JS object definition at /src/modules/http/_response-to-object.ts
-                   */
-                  auto responseObject = facebook::jsi::Object(arguments[0].asObject(rt_2));
-                  responseObjectPromise->set_value(std::move(responseObject));
-
-                  return facebook::jsi::Value::undefined();
-                })/* end call */);
-      });
-
-      /**
-       * Check the JS object definition at /src/modules/http/_response-to-object.ts
-       */
-      auto responseObject = responseObjectFuture.get();
-
-      auto body = responseObject.getProperty(rt, "body");
-      auto bodyType = responseObject.getProperty(rt, "bodyType").asString(rt);
-
-      auto headers = responseObject.getProperty(rt, "headers").asObject(rt);
-
-      auto status = responseObject.getProperty(rt, "status").asNumber();
-      auto statusText = responseObject.getProperty(rt, "statusText").asString(rt);
-
-      // +++++ Write Header +++++
-      {
-        const auto headerNames = headers.getPropertyNames(rt);
-        for(int i = 0; i < static_cast<int>(headerNames.length(rt)); i++) {
-          facebook::jsi::String headerNameJsString = headerNames.getValueAtIndex(rt, i).asString(rt);
-          std::string headerValueStr = headers.getProperty(rt, headerNameJsString).asString(rt).utf8(rt);
-
-          res->writeHeader(std::move(headerNameJsString).utf8(rt), std::move(headerValueStr));
-        }
-      }
-      // ----- Write Header -----
-
-      // +++++ Write Response +++++
-      if(bodyType.utf8(rt) == "text" && body.isString()) {
-        res->end(body.asString(rt).utf8(rt));
-      } else {
-        res->end(R"({"message": "Internal server error"})");
-      }
-      // ---- Write Response
+    serverPtr->routeAny(path.utf8(rt), [asyncCallback_ = std::move(asyncCallback)](uWS::HttpResponse<false> *res, uWS::HttpRequest *req) {
+      commonRouteHandler(asyncCallback_,
+                         res,
+                         req);
     });
   }
 }

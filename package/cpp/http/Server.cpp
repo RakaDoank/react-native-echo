@@ -26,8 +26,7 @@ void Server::listen(int &port,
   this->serverThread = std::thread([this, listenerCallback, listenerFailureCallback, port]() {
     // move app instance due to different thread
     uWS::App internalApp = uWS::App(std::move(this->app));
-
-    this->serverLoop = internalApp.getLoop();
+    this->loop = internalApp.getLoop();
 
     internalApp.listen("0.0.0.0", port,
                        [this, listenerCallback, listenerFailureCallback](auto *listenedSocket) {
@@ -39,15 +38,15 @@ void Server::listen(int &port,
       }
     });
 
-    this->serverLoop->run();
+    this->loop->run();
   });
 
   this->serverThread.detach();
 }
 
 void Server::close(const std::function<void ()> &onClose) {
-  if(this->serverLoop) {
-    this->serverLoop->defer(static_cast<uWS::MoveOnlyFunction<void (void)> &&>([this, onClose]() {
+  if(this->loop) {
+    this->loop->defer(static_cast<uWS::MoveOnlyFunction<void (void)> &&>([this, onClose]() {
         // Close the listening sockets
         std::lock_guard<std::mutex> lock(this->listenSocketMutex);
         if (this->listenSocket) {
@@ -61,8 +60,9 @@ void Server::close(const std::function<void ()> &onClose) {
 
 void Server::routeAny(std::string &&path,
                       const std::function<void (uWS::HttpResponse<false> *httpResponse, uWS::HttpRequest *httpRequest)> &&handler) {
-  this->app.any(path, [handler](auto *res, auto *req) mutable {
+  this->app.any(path, [handler](auto *res, auto *req) {
     handler(res, req);
+
 //    res->end("Hola " + std::to_string(result));
 //    if(this->serverLoop) {
 //      int result = handler(res, req);

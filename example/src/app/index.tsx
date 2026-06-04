@@ -21,43 +21,42 @@ export default function Page() {
 		const server = new Echo.Http.Server()
 
 		server.route("/api/route", (request) => {
-			console.log("/api/route", request)
-			return Echo.Http.Response.json({
-				bool: true,
-				number: Math.random(),
-				string: "Ich komme aus Deutschland",
-				array: [{
-					bool: true,
-					number: Math.random(),
-					string: "Ich komme aus Osterreich",
-				}, {
-					bool: true,
-					number: Math.random(),
-					string: "Ich komme aus Frankreich",
-				}],
-			})
+			// return Echo.Http.Response.json({
+			// 	bool: true,
+			// 	number: Math.random(),
+			// 	string: "Ich komme aus Deutschland",
+			// 	array: [{
+			// 		bool: true,
+			// 		number: Math.random(),
+			// 		string: "Ich komme aus Osterreich",
+			// 	}, {
+			// 		bool: true,
+			// 		number: Math.random(),
+			// 		string: "Ich komme aus Frankreich",
+			// 	}],
+			// })
 
 			// mock long run
-			// return new Promise<Echo.Http.Response>(resolve => {
-			// 	setTimeout(() => {
-			// 		resolve(
-			// 			Echo.Http.Response.json({
-			// 				bool: true,
-			// 				number: Math.random(),
-			// 				string: "Ich komme aus Deutschland",
-			// 				array: [{
-			// 					bool: true,
-			// 					number: Math.random(),
-			// 					string: "Ich komme aus Osterreich",
-			// 				}, {
-			// 					bool: true,
-			// 					number: Math.random(),
-			// 					string: "Ich komme aus Frankreich",
-			// 				}],
-			// 			}),
-			// 		)
-			// 	}, 2000)
-			// })
+			return new Promise<Echo.Http.Response>(resolve => {
+				setTimeout(() => {
+					resolve(
+						Echo.Http.Response.json({
+							bool: true,
+							number: Math.random(),
+							string: "Ich komme aus Deutschland",
+							array: [{
+								bool: true,
+								number: Math.random(),
+								string: "Ich komme aus Osterreich",
+							}, {
+								bool: true,
+								number: Math.random(),
+								string: "Ich komme aus Frankreich",
+							}],
+						}),
+					)
+				}, 6000)
+			})
 		})
 
 		server.route("/hello/:name", () => {

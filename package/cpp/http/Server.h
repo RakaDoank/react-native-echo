@@ -30,7 +30,7 @@ private:
    * The main loop of the uWebSockets.
    * Useful to wake the uWS Loop immediately to execute queued tasks.
    */
-  uWS::Loop *serverLoop = nullptr;
+  uWS::Loop *loop = uWS::Loop::get();
 
   // +++++ for socket closing +++++
   us_listen_socket_t *listenSocket = nullptr;
